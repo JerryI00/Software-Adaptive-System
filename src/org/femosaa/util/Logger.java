@@ -11,13 +11,13 @@ import jmetal.core.Solution;
 import jmetal.core.SolutionSet;
 
 public class Logger {
-	public static final String prefix = "/Users/tao/research/monitor/ws-soa/sas/";
+	public static String prefix = "/Users/tao/research/monitor/ws-soa/sas/";
 	// This attribute is only used for testing
 	public static int max_number_of_eval_to_have_only_seed = 0;
 	public static synchronized void logSolutionSet(SolutionSet pareto_front, String name){
 		File file = null;
 		if(!(file = new File(prefix)).exists()){
-			file.mkdir();
+			file.mkdirs();
 		} 
 		
 		try {
@@ -44,10 +44,32 @@ public class Logger {
 		
 	}
 	
+	public static synchronized void logFirstTod(double gen, String name){
+		File file = null;
+		if(!(file = new File(prefix)).exists()){
+			file.mkdirs();
+		} 
+		
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(prefix
+					+ name, true));
+
+			String data = String.valueOf(gen);
+			
+			bw.write(data);
+			bw.write("------------------------\n");
+			bw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 	public static synchronized void logSolutionSetWithGeneration(SolutionSet pareto_front, String name, int gen){
 		File file = null;
 		if(!(file = new File(prefix)).exists()){
-			file.mkdir();
+			file.mkdirs();
 		} 
 		
 		try {
@@ -78,7 +100,7 @@ public class Logger {
 	public static synchronized void logSolutionSetWithGenerationAndFuzzyValue(SolutionSet new_pareto_front, SolutionSet old_pareto_front, String name, int gen){
 		File file = null;
 		if(!(file = new File(prefix)).exists()){
-			file.mkdir();
+			file.mkdirs();
 		} 
 		
 		try {
@@ -125,7 +147,7 @@ public class Logger {
 	public static synchronized void logSolutionSetValues(SolutionSet pareto_front, String name){
 		File file = null;
 		if(!(file = new File(prefix)).exists()){
-			file.mkdir();
+			file.mkdirs();
 		} 
 		
 		try {
@@ -155,7 +177,7 @@ public class Logger {
 	public static synchronized void logPercentageOfMarkedSolution(SolutionSet pareto_front, String name){
 		File file = null;
 		if(!(file = new File(prefix)).exists()){
-			file.mkdir();
+			file.mkdirs();
 		} 
 		
 		try {

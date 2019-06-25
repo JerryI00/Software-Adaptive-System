@@ -13,20 +13,23 @@ public abstract class SASAlgorithmAdaptor {
 	//protected static double CROSSOVER_RATE = 0.9;
 	private static final boolean PRINT_SOLUTIONS = true; /*important*/
 	private static final boolean PRINT_INVALID_SOLUTIONS = false;
-	private static final boolean LOG_SOLUTIONS = false; /*important*/
+	private static final boolean LOG_SOLUTIONS = true; /*important*/
 	private static final boolean LOG_NON_DOMINATED_SOLUTIONS = false;
 	
-	private static final boolean LOG_SOLUTIONS_VALUES = false; /*important*/
+	public static boolean isLogToD = false;
+	public static double d = 14.5;
+	private static final boolean LOG_SOLUTIONS_VALUES = true; /*important*/
 	// This can be changed within SSASE
 	public static boolean isPreserveInvalidSolution = false;
 	// This can be changed within SSASE
-	public static boolean isSeedSolution = false;
+	public static boolean isSeedSolution = true;
 	// This can be changed within SSASE
-	public static boolean isLogTheEvalNeededToRemiveNonSeed = false;
+	public static boolean isLogTheEvalNeededToRemiveNonSeed = true;
 	// This is actually number of function evaluation
-	public static int logGenerationOfObjectiveValue = 0;//500;//5000; // <=0 means disabled.
+	public static int logGenerationOfObjectiveValue = 500;//500;//5000; // <=0 means disabled.
 	// This is to control if fuzzy requirement is enable
-	public static boolean isFuzzy = true; 
+	public static boolean isFuzzy = false; 
+	public static long seed_time = -1;//test only for seeding
 	public Solution execute(SASSolutionInstantiator factory, int[][] vars,
 			int numberOfObjectives_, int numberOfConstraints_)
 			throws JMException, SecurityException, IOException,
@@ -60,7 +63,7 @@ public abstract class SASAlgorithmAdaptor {
 		}		
 		if(LOG_SOLUTIONS) {
 			org.femosaa.util.Logger.logSolutionSet(pareto_front, "SolutionSet.rtf");
-			//org.femosaa.util.Logger.logPercentageOfMarkedSolution(pareto_front, "HowManyFromSeeds.rtf");
+			org.femosaa.util.Logger.logPercentageOfMarkedSolution(pareto_front, "HowManyFromSeeds.rtf");
 		}	
 		if(LOG_SOLUTIONS_VALUES) {
 			org.femosaa.util.Logger.logSolutionSetValues(pareto_front, "SolutionSetValue.rtf");

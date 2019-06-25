@@ -127,7 +127,7 @@ public class RS_SAS extends Algorithm {
 		} 
 		
 		Random rand = new Random();
-	
+		double te = 0.0;
 		
 		// Generations 
 		while (evaluations < maxEvaluations) {
@@ -152,6 +152,12 @@ public class RS_SAS extends Algorithm {
 			
 			problem_.evaluate(nextSolution);
 			problem_.evaluateConstraints(nextSolution);
+			
+			if(SASAlgorithmAdaptor.isLogToD && nextSolution.getObjective(0) <= SASAlgorithmAdaptor.d && te == 0.0) {
+				System.out.print("Found one with " + evaluations + "\n");
+				te = evaluations; 
+			}
+			
 			
 			updateReference(nextSolution);
 			updateNadirPoint(nextSolution);
@@ -190,7 +196,11 @@ public class RS_SAS extends Algorithm {
 		// Return as output parameter the required evaluations
 		//setOutputParameter("evaluations", requiredEvaluations);
 		
-		
+		if(SASAlgorithmAdaptor.isLogToD) {
+			   System.out.print("Minimum evaluation " + te + "\n");
+			   org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
+		}
+			
 		
 		return population;
 	} // execute

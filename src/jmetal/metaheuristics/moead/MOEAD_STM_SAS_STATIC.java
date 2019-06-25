@@ -36,6 +36,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 import org.femosaa.core.SASAlgorithmAdaptor;
+import org.femosaa.core.SASSolution;
 import org.femosaa.core.SASSolutionInstantiator;
 import org.femosaa.seed.Seeder;
 
@@ -135,7 +136,7 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 
 		/* STEP 1. INITIALIZATION */
 		// STEP 1.1. compute Euclidean distances between weight vectors and find T
-		initUniformWeight();
+		//initUniformWeight();
 		initNeighborhood();
 
 		// STEP 1.2. initialize population
@@ -148,7 +149,7 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 		// STEP 1.3. initialize the ideal and nadir points
 		initIdealPoint();
 		initNadirPoint();
-
+		long time = Long.MAX_VALUE;
 		/* STEP 2. UPDATE */
 		do {
 			int[] permutation = new int[populationSize_];
@@ -189,6 +190,11 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 				// add into the offspring population
 				currentOffspring_.add(children[0]);
 				currentOffspring_.add(children[1]);
+				
+				if(((SASSolution)parents[0]).isFromInValid || ((SASSolution)parents[1]).isFromInValid) {
+					((SASSolution)children[0]).isFromInValid = true;
+					((SASSolution)children[1]).isFromInValid = true;
+				}
 			} // for
 			
 			// Combine the parent and the current offspring populations
@@ -196,11 +202,17 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 
 			// selection process
 			selection();
+			if(SASAlgorithmAdaptor.isLogTheEvalNeededToRemiveNonSeed) {
+				org.femosaa.util.Logger.printMarkedSolution(population_, evaluations_);
+			}
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0&& evaluations_%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
 				org.femosaa.util.Logger.logSolutionSetWithGeneration(population_, "SolutionSetWithGen.rtf", 
 						evaluations_);
 			}
-		} while (evaluations_ <= maxEvaluations);
+			if(evaluations_ >= maxEvaluations && time == Long.MAX_VALUE) {
+				time = System.currentTimeMillis();
+			}
+		} while (evaluations_ <= maxEvaluations|| (evaluations_ >= maxEvaluations && (System.currentTimeMillis() - time) < -1 ));
 		
 		// find the knee point
 //		kneeIndividual = kneeSelection();
@@ -378,7 +390,8 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 		
 		// vecInd has been normalized to the range [0,1]
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
-			vecInd[i] = (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]);
+			vecInd[i] = nz_[i] != z_[i]? (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]) : 
+				(individual.getObjective(i)- z_[i]) / (nz_[i]);
 
 		scale = innerproduct(vecInd, lambda) / innerproduct(lambda, lambda);
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
@@ -437,7 +450,8 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 
 		// difference between current point and reference point
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
-			realA[i] = (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]);
+			realA[i] = nz_[i] != z_[i]? (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]) :
+				(individual.getObjective(i) - z_[i]) / (nz_[i]);
 
 		// distance along the line segment
 		double d1 = Math.abs(innerproduct(realA, lambda));
@@ -449,7 +463,6 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 
 		return distance;
 	}
-	
 	/**
 	 * Initialize the weight vectors for subproblems (We only use the data that are already available)
 	 */
@@ -770,10 +783,11 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 			
 			// normalization
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) 
-				normalized_obj[i] = (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]);
+				normalized_obj[i] = nz_[i] != z_[i]? Math.abs((individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) :
+					Math.abs((individual.getObjective(i)- z_[i]) / (nz_[i]));
 			
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-				double diff = Math.abs(individual.getObjective(i));
+				double diff = normalized_obj[i];//Math.abs(individual.getObjective(i));
 				
 				double feval;
 				if (lambda[i] == 0)

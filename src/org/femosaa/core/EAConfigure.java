@@ -3,8 +3,10 @@ package org.femosaa.core;
 public class EAConfigure {
 	
 	static {
-		con = new EAConfigure(100, 10, 0.9, 0.1);
+		//con = new EAConfigure(100, 10, 0.9, 0.1);
 		//con = new EAConfigure(20, 50, 0.5, 0.05);
+		con = new EAConfigure(100, 50, 0.9,  0.1);
+		//con = new EAConfigure(100, 300, 0.8, 0.02);
 	}
 
 	public int pop_size;
@@ -32,12 +34,25 @@ public class EAConfigure {
 		return con;
 	}
 	
+	public void setupWSConfiguration(double crossover){
+		//con = new EAConfigure(100, 50, crossover,  0.1);
+		//seeding 100 AS - 
+		con = new EAConfigure(100, 300, crossover, 0.02);
+	}
+	
 	public void setupWSConfiguration(){
-		con = new EAConfigure(100, 50, 0.9, 0.1);
+		//con = new EAConfigure(100, 50, 0.9,  0.1);
+		//seeding 100 AS - 
+		con = new EAConfigure(100, 300, 0.8, 0.02);
+	}
+	
+	public void setupRUBiSSimConfiguration(){
+		con = new EAConfigure(100, 10, 0.9, 0.1);
 	}
 	
 	public void setupWSConfigurationOnlyMutation(){
-		con = new EAConfigure(100, 50, 0.9,  0.1);
+		//con = new EAConfigure(100, 50, 0.0,  0.1);
+		con = new EAConfigure(100, 300, 0.0, 0.02);
 	}
 	
 

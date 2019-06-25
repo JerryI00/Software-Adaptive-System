@@ -196,6 +196,7 @@ public class MOEAD_SAS_main extends SASAlgorithmAdaptor{
 		problem = new SAS("SASSolutionType", factory, vars, numberOfObjectives_, numberOfConstraints_);
 		
 		//algorithm = new MOEAD_STM_SAS_STATIC(problem, factory);
+		/**Important!!!! remember to change it***/
 		algorithm = new MOEAD_STM_SAS(problem, factory);
 
 		// Algorithm parameters
@@ -244,7 +245,8 @@ public class MOEAD_SAS_main extends SASAlgorithmAdaptor{
 		algorithm.addOperator("crossover", crossover);
 		algorithm.addOperator("mutation", mutation);
 
-		
+
+		//algorithm.addOperator("selection", SelectionFactory.getSelectionOperator("BinaryTournament2", parameters));
 		
 		long initTime = System.currentTimeMillis();
 		

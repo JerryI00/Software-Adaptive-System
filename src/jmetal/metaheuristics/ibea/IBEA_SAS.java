@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.femosaa.core.SASAlgorithmAdaptor;
+import org.femosaa.core.SASSolution;
 import org.femosaa.core.SASSolutionInstantiator;
 import org.femosaa.invalid.SASValidityAndInvalidityCoEvolver;
 import org.femosaa.seed.Seeder;
@@ -367,7 +368,14 @@ public class IBEA_SAS extends Algorithm {
 			} //for  
 		}
 		
-		while (evaluations < maxEvaluations) {
+	     
+		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0) {
+			org.femosaa.util.Logger.logSolutionSetWithGeneration(solutionSet,
+					"InitialSolutionSet.rtf", 0);
+		}
+
+		long time = Long.MAX_VALUE;
+		while (evaluations < maxEvaluations|| (evaluations >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time  )) {
 			
 			SolutionSet old_union = null;
 			SolutionSet union = null;
@@ -441,14 +449,24 @@ public class IBEA_SAS extends Algorithm {
 				offSpringSolutionSet.add(offSpring[0]);
 				evaluations++;
 				
+				
+				if(((SASSolution)parents[0]).isFromInValid || ((SASSolution)parents[1]).isFromInValid) {
+					((SASSolution)offSpring[0]).isFromInValid = true;
+				}
+				
 			} // while
-
+			if(SASAlgorithmAdaptor.isLogTheEvalNeededToRemiveNonSeed) {
+				org.femosaa.util.Logger.printMarkedSolution(archive, evaluations);
+			}
 			// End Create a offSpring solutionSet
 			solutionSet = offSpringSolutionSet; 
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0 
 					&& evaluations > 0) {
 				org.femosaa.util.Logger.logSolutionSetWithGeneration(archive, "SolutionSetWithGen.rtf", 
 						evaluations);
+			}
+			if(evaluations >= maxEvaluations && time == Long.MAX_VALUE) {
+				time = System.currentTimeMillis();
 			}
 		} // while
 

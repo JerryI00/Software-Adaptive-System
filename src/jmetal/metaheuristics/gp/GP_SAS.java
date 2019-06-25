@@ -145,11 +145,16 @@ public class GP_SAS extends Algorithm {
 			fitnessAssignment(population.get(i));	// assign fitness value to each solution			
 		}
 		
-		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0) {
-			org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
-					"SolutionSetWithGen.rtf", 0);
+		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0) {			
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
+						"SolutionSetWithGen.rtf", 0);
+			} else {
+				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+						0);
+			}
 		} 
-		
+		double te = 0.0;
 		// Generations 
 		while (evaluations < maxEvaluations) {
 
@@ -169,6 +174,12 @@ public class GP_SAS extends Algorithm {
 					problem_.evaluateConstraints(offSpring[0]);
 					problem_.evaluate(offSpring[1]);
 					problem_.evaluateConstraints(offSpring[1]);
+					
+					if(SASAlgorithmAdaptor.isLogToD && (offSpring[0].getObjective(0) <= SASAlgorithmAdaptor.d || 
+							offSpring[1].getObjective(0) <= SASAlgorithmAdaptor.d) && te == 0.0) {
+						System.out.print("Found one with " + evaluations + "\n");
+						te = evaluations; 
+					}
 					
 					updateReference(offSpring[0]);
 					updateNadirPoint(offSpring[0]);
@@ -216,8 +227,13 @@ public class GP_SAS extends Algorithm {
 			}
 			
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
-				org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population, "SolutionSetWithGen.rtf", 
-						evaluations );
+				if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population, "SolutionSetWithGen.rtf", 
+							evaluations );
+				} else {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+							evaluations );
+				}								
 			}
 
 		} // while
@@ -228,7 +244,11 @@ public class GP_SAS extends Algorithm {
 		// Return as output parameter the required evaluations
 		setOutputParameter("evaluations", requiredEvaluations);
 		
-		
+		if(SASAlgorithmAdaptor.isLogToD) {
+			   System.out.print("Minimum evaluation " + te + "\n");
+			   org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
+		}
+			
 		
 		return population;
 	} // execute

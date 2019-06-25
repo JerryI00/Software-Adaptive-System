@@ -171,11 +171,17 @@ public class MOEAD_STM_SAS extends Algorithm {
 			} //for  
 		}
 
+	     
+		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0) {
+			org.femosaa.util.Logger.logSolutionSetWithGeneration(population_,
+					"InitialSolutionSet.rtf", 0);
+		}
 		// STEP 1.3. initialize the ideal and nadir points
 		initIdealPoint();
 		initNadirPoint();
 
-		long time = System.currentTimeMillis();
+		//long time = System.currentTimeMillis();
+		long time = Long.MAX_VALUE;
 		int iteration = 0;
 		/* STEP 2. UPDATE */
 		do {
@@ -226,7 +232,7 @@ public class MOEAD_STM_SAS extends Algorithm {
 				} 
 				
 				parents = matingSelection(p, n, 2, type);
-
+				
 				// apply DE crossover and polynomial mutation
 				//child = (Solution) crossover_.execute(new Object[] {population_.get(n), parents});
 				//children=parents;
@@ -259,6 +265,10 @@ public class MOEAD_STM_SAS extends Algorithm {
 					((SASSolution)children[0]).isFromInValid = true;
 					((SASSolution)children[1]).isFromInValid = true;
 				}
+				
+				//System.out.print("parent seed " + ((SASSolution)parents[0]).isFromInValid + " : " + ((SASSolution)parents[1]).isFromInValid + "*****\n");
+				//System.out.print("children seed " + ((SASSolution)children[0]).isFromInValid + " : " + ((SASSolution)children[1]).isFromInValid + "*****\n");
+				
 			} // for
 			
 			// Combine the parent and the current offspring populations
@@ -276,14 +286,22 @@ public class MOEAD_STM_SAS extends Algorithm {
 			if(vandInvCoEvolver != null) {
 				vandInvCoEvolver.doEnvironmentalSelection(population_);
 			}
+			if(SASAlgorithmAdaptor.isLogTheEvalNeededToRemiveNonSeed) {
+				org.femosaa.util.Logger.printMarkedSolution(population_, evaluations_);
+			}
 			
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations_%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
 				org.femosaa.util.Logger.logSolutionSetWithGeneration(population_, "SolutionSetWithGen.rtf", 
 						evaluations_ );
 			}
 			
-		} while (evaluations_ <= maxEvaluations && (System.currentTimeMillis() - time) < SAS.TIME_THRESHOLD);
-		
+			if(evaluations_ >= maxEvaluations && time == Long.MAX_VALUE) {
+				time = System.currentTimeMillis();
+			}
+			
+		} while (evaluations_ <= maxEvaluations  
+				|| (evaluations_ >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time ));
+		//while  ((evaluations_ <= maxEvaluations && (System.currentTimeMillis() - time) < SAS.TIME_THRESHOLD)
 		// find the knee point
 //		kneeIndividual = kneeSelection();
 //		
@@ -377,8 +395,12 @@ public class MOEAD_STM_SAS extends Algorithm {
 
 		idx = stableMatching(subpPref, solPref, populationSize_, union_.size());
 
-		for (int i = 0; i < populationSize_; i++)
+		for (int i = 0; i < populationSize_; i++) {
 			population_.replace(i, factory.getSolution(union_.get(idx[i])));
+			if(((SASSolution)union_.get(idx[i])).isFromInValid) {
+				((SASSolution)population_.get(i)).isFromInValid = true;
+			}
+		}
 	}
   
   	/**

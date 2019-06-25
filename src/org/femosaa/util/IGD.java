@@ -1,6 +1,6 @@
 package org.femosaa.util;
 
-public class IGD {
+public class IGD extends Indicator{
 
 	
 	public double invertedGenerationalDistance( double[][] front,  double[][] referenceFront) {

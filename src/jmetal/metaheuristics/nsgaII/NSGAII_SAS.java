@@ -161,7 +161,7 @@ public class NSGAII_SAS extends Algorithm {
 		long time = Long.MAX_VALUE;
 		
 		// Generations 
-		while (evaluations < maxEvaluations || (evaluations >= maxEvaluations && (System.currentTimeMillis() - time) < -1 )) {
+		while (evaluations < maxEvaluations || (evaluations >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time )) {
 			System.out.print("no" + evaluations + "***eval\n");
 		
 //

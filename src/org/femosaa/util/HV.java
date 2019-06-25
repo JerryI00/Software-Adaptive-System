@@ -128,6 +128,11 @@ public class HV {
 	  }
 
 	  /**
+	   * This implementation natraully handle non-dominated solution, thus
+	   * no need to ensure the front is non-dominated.
+	   * 
+	   * Also, since the front is normalized, the reference point after invertion would be <0,0,0...>.
+	   * 
 	   * Returns the hypervolume value of a front of points
 	   *
 	   * @param front        The front

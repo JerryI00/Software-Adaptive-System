@@ -32,6 +32,7 @@ public class NewSeeder extends Seeder{
 	private static long time = 0;
 	private static int count = 0;
 	
+	
 	public static NewSeeder getInstance(Operator mutationOperator){
 		if(seeder == null) {
 			seeder = new NewSeeder(mutationOperator);
@@ -125,6 +126,7 @@ public class NewSeeder extends Seeder{
 			problem_.evaluate(newSolution);
 			problem_.evaluateConstraints(newSolution);
 			population.add(newSolution);
+		
 		} 
 		
 	}
@@ -134,8 +136,10 @@ public class NewSeeder extends Seeder{
 		SolutionSet front = new SolutionSet();
 		for(int i = 0; i < no; i++) {
 			front.add(s);
+			printSeeds(s);
 		}
 		
+	
 		return front;
 	}
 	
@@ -147,6 +151,9 @@ public class NewSeeder extends Seeder{
 			front.add(history.get(0));
 			front.add(history.get(1));
 			front.add(history.get(2));
+			printSeeds(history.get(0));
+			printSeeds(history.get(1));
+			printSeeds(history.get(2));
 		}
 		
 		return front;
@@ -190,7 +197,7 @@ public class NewSeeder extends Seeder{
 				k++;
 			}
 		}
-		
+		printSeeds(front);
 		return front;
 	}
 	
@@ -199,18 +206,33 @@ public class NewSeeder extends Seeder{
 		for (int i = 0; i < history.size(); i++) {
 			list.add(history.get(i));
 		}
-		//Collections.shuffle(list);
+		Collections.shuffle(list);
 		SolutionSet front = new SolutionSet(no);
 		for (int i = 0; i < no; i++) {
 			front.add(list.get(i));
 		}
-		
+		printSeeds(front);
 		return front;
 	}
 	
 
 	public enum SeedingStrategy {
 		AO_Seed, SO_Seed, H_Seed, R_Seed, NONE
+	}
+	
+	private void printSeeds(SolutionSet front){
+		for (int i = 0; i < front.size();i++) {
+			printSeeds(front.get(i));
+		}
+	}
+
+	
+	private void printSeeds(Solution s){
+		String s1 = "";
+		for (int j = 0; j < s.numberOfObjectives(); j++) {
+			s1 += s.getObjective(j) + " ";
+		}
+		System.out.print(s+"\n");
 	}
 
 }

@@ -125,7 +125,7 @@ public class HC_SAS extends Algorithm {
 		} 
 		
 		int index = 0;
-		
+		double te = 0.0;
 		// Generations 
 		while (evaluations < maxEvaluations) {
 
@@ -155,6 +155,10 @@ public class HC_SAS extends Algorithm {
 			updateReference(nextSolution);
 			updateNadirPoint(nextSolution);
 		
+			if(SASAlgorithmAdaptor.isLogToD && nextSolution.getObjective(0) <= SASAlgorithmAdaptor.d && te == 0.0) {
+				System.out.print("Found one with " + evaluations + "\n");
+				te = evaluations; 
+			}
 			
 			old_population.add(nextSolution);
 			if(SASAlgorithmAdaptor.isFuzzy) {
@@ -188,8 +192,10 @@ public class HC_SAS extends Algorithm {
 		}
 		// Return as output parameter the required evaluations
 		//setOutputParameter("evaluations", requiredEvaluations);
-		
-		
+		if(SASAlgorithmAdaptor.isLogToD) {
+		   System.out.print("Minimum evaluation " + te + "\n");
+		   org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
+		}
 		
 		return population;
 	} // execute
