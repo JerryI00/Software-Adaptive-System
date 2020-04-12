@@ -491,9 +491,14 @@ public class MOEAD_STM_SAS extends Algorithm {
 		double[] vecProj = new double[problem_.getNumberOfObjectives()];
 		
 		// vecInd has been normalized to the range [0,1]
-		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
+		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+			if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+				vecInd[i] = 1.0;
+			} else {
 			vecInd[i] = nz_[i] != z_[i]? (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]) : 
 				(individual.getObjective(i)- z_[i]) / (nz_[i]);
+		    }
+		}
 
 		scale = innerproduct(vecInd, lambda) / innerproduct(lambda, lambda);
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
@@ -520,9 +525,9 @@ public class MOEAD_STM_SAS extends Algorithm {
 		double[] normalizedObj = new double[problem_.getNumberOfObjectives()];
 
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
-			distanceSum += individual.getObjective(i);
+			distanceSum += individual.getObjective(i) == Double.MAX_VALUE/100? nz_[i] :  individual.getObjective(i);
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
-			normalizedObj[i] = individual.getObjective(i) / distanceSum;
+			normalizedObj[i] = individual.getObjective(i) == Double.MAX_VALUE/100? nz_[i] / distanceSum :  individual.getObjective(i) / distanceSum;
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
 			vecInd[i] = normalizedObj[i] - lambda[i];
 
@@ -551,10 +556,14 @@ public class MOEAD_STM_SAS extends Algorithm {
 		double[] realB = new double[problem_.getNumberOfObjectives()];
 
 		// difference between current point and reference point
-		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
+		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+			if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+				realA[i] = 1.0;
+			} else {
 			realA[i] = nz_[i] != z_[i]? (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]) :
 				(individual.getObjective(i) - z_[i]) / (nz_[i]);
-
+		    }
+		}
 		// distance along the line segment
 		double d1 = Math.abs(innerproduct(realA, lambda));
 
@@ -832,7 +841,7 @@ public class MOEAD_STM_SAS extends Algorithm {
   	 */
 	void updateNadirPoint(Solution individual) {
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-			if (individual.getObjective(i) > nz_[i])
+			if (individual.getObjective(i) != Double.MAX_VALUE/100 && individual.getObjective(i) > nz_[i])
 				nz_[i] = individual.getObjective(i);
 		}
 	}
@@ -880,7 +889,11 @@ public class MOEAD_STM_SAS extends Algorithm {
 			double maxFun = -1.0e+30;
 
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-				double diff = Math.abs(individual.getObjective(i) - z_[i]);
+				double d = individual.getObjective(i);
+				if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+					d = nz_[i];
+				}
+				double diff = Math.abs(d- z_[i]);
 
 				double feval;
 				if (lambda[i] == 0) {
@@ -898,10 +911,14 @@ public class MOEAD_STM_SAS extends Algorithm {
 			double[] normalized_obj = new double[problem_.getNumberOfObjectives()];
 			
 			// normalization
-			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) 
+			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+				if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+					normalized_obj[i] = 1.0;
+				} else { 
 				normalized_obj[i] = nz_[i] != z_[i]? Math.abs((individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) :
 					Math.abs((individual.getObjective(i)- z_[i]) / (nz_[i]));
-			
+			   }
+		    }
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 				double diff = normalized_obj[i];//Math.abs(individual.getObjective(i));
 				
@@ -918,7 +935,11 @@ public class MOEAD_STM_SAS extends Algorithm {
 			double max_fun = -1.0e+30;
 			
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-				double diff = (individual.getObjective(i) - z_[i]);
+				double d = individual.getObjective(i);
+				if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+					d = nz_[i];
+				}
+				double diff = (d - z_[i]);
 				double feval;
 				if (lambda[i] == 0)
 					feval = 0.000001 * diff;
@@ -933,11 +954,15 @@ public class MOEAD_STM_SAS extends Algorithm {
 			double[] normalized_obj = new double[problem_.getNumberOfObjectives()];
 			
 			// normalization
-			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) 
-				normalized_obj[i] = (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]);
-			
+			for (int i = 0; i < problem_.getNumberOfObjectives(); i++)  {
+				if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+					normalized_obj[i] = 1.0;
+				} else {
+				 normalized_obj[i] = (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]);
+			    }
+			}
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-				double diff = Math.abs(individual.getObjective(i));
+				double diff = individual.getObjective(i) == Double.MAX_VALUE/100? Math.abs(nz_[i]) : Math.abs(individual.getObjective(i));
 				double feval;
 				if (lambda[i] == 0)
 					feval = 0.000001 * diff;
@@ -963,14 +988,15 @@ public class MOEAD_STM_SAS extends Algorithm {
 
 			// difference beween current point and reference point
 			for (int n = 0; n < problem_.getNumberOfObjectives(); n++)
-				realA[n] = (individual.getObjective(n) - z_[n]);
+				realA[n] = individual.getObjective(n) == Double.MAX_VALUE/100? (nz_[n] - z_[n]) : (individual.getObjective(n) - z_[n]);
 
 			// distance along the line segment
 			double d1 = Math.abs(innerproduct(realA, lambda));
 
 			// distance to the line segment
 			for (int n = 0; n < problem_.getNumberOfObjectives(); n++)
-				realB[n] = (individual.getObjective(n) - (z_[n] + d1
+				realB[n] = individual.getObjective(n) == Double.MAX_VALUE/100? (nz_[n]  - (z_[n] + d1
+						* lambda[n])) : (individual.getObjective(n) - (z_[n] + d1
 						* lambda[n]));
 			double d2 = norm_vector(realB);
 

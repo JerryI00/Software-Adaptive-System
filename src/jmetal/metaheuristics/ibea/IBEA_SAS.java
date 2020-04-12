@@ -100,11 +100,11 @@ public class IBEA_SAS extends Algorithm {
 		r = rho * (maximumValues[d - 1] - minimumValues[d - 1]);
 		max = minimumValues[d - 1] + r;
 
-		a = p_ind_a.getObjective(d - 1);
+		a = p_ind_a.getObjective(d - 1) == Double.MAX_VALUE/100? maximumValues[d - 1] : p_ind_a.getObjective(d - 1);
 		if (p_ind_b == null)
 			b = max;
 		else
-			b = p_ind_b.getObjective(d - 1);
+			b = p_ind_b.getObjective(d - 1) == Double.MAX_VALUE/100? maximumValues[d - 1] : p_ind_b.getObjective(d - 1);
 
 		if (d == 1) {
 			if (a < b)
@@ -190,13 +190,19 @@ public class IBEA_SAS extends Algorithm {
 			for (int j = 0; j < solutionSet.size(); j++) {
 				B = new Solution(solutionSet.get(j));
 				
+				double av = A.getObjective(0) == Double.MAX_VALUE/100? maximumValues[0] : A.getObjective(0);
+				double bv = B.getObjective(0) == Double.MAX_VALUE/100? maximumValues[0] : B.getObjective(0);
+				
 				double r = (maximumValues[0] != minimumValues[0])? maximumValues[0] - minimumValues[0] : maximumValues[0];
-				double eps = (A.getObjective(0) - minimumValues[0]) / r - (B.getObjective(0) - minimumValues[0]) / r;
+				double eps = (av - minimumValues[0]) / r - (bv - minimumValues[0]) / r;
 				for (int k = 1; k < problem_.getNumberOfObjectives(); k++) {
 					double temp_eps;
 					
+					double aav = A.getObjective(k) == Double.MAX_VALUE/100? maximumValues[k] : A.getObjective(k);
+					double bbv = B.getObjective(k) == Double.MAX_VALUE/100? maximumValues[k] : B.getObjective(k);
+					
 					r = (maximumValues[k] != minimumValues[k])? maximumValues[k] - minimumValues[k] : maximumValues[k];
-					temp_eps = (A.getObjective(k) - minimumValues[k]) / r - (B.getObjective(k) - minimumValues[k]) / r;
+					temp_eps = (aav - minimumValues[k]) / r - (bbv - minimumValues[k]) / r;
 					if (temp_eps > eps)
 						eps = temp_eps;
 				}
@@ -240,7 +246,7 @@ public class IBEA_SAS extends Algorithm {
 		for (int pos = 0; pos < solutionSet.size(); pos++) {
 			for (int obj = 0; obj < problem_.getNumberOfObjectives(); obj++) {
 				double value = solutionSet.get(pos).getObjective(obj);
-				if (value > maximumValues[obj])
+				if (value!= Double.MAX_VALUE/100 && value > maximumValues[obj])
 					maximumValues[obj] = value;
 				if (value < minimumValues[obj])
 					minimumValues[obj] = value;

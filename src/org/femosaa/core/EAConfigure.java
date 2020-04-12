@@ -41,9 +41,13 @@ public class EAConfigure {
 	}
 	
 	public void setupWSConfiguration(){
-		//con = new EAConfigure(100, 50, 0.9,  0.1);
+		con = new EAConfigure(100, 500, 0.9,  0.1);
 		//seeding 100 AS - 
-		con = new EAConfigure(100, 300, 0.8, 0.02);
+		//con = new EAConfigure(100, 300, 0.8, 0.02);
+	}
+	
+	public void setupFLASHConfiguration(){
+		con = new EAConfigure(20, 25, 0.9,  0.1);
 	}
 	
 	public void setupRUBiSSimConfiguration(){

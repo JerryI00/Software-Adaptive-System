@@ -307,7 +307,34 @@ public class NSGAII_SAS extends Algorithm {
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
 				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
 						evaluations );
+				org.femosaa.util.Logger.logSolutionSetValuesWithGen(population, "SolutionSetValuesWithGen.rtf", 
+						evaluations );
 			}
+			
+			if(SASAlgorithmAdaptor.isLogDiscardedSolutions) {
+				SolutionSet p = new SolutionSet(union.size() - population.size());
+			
+				for (int k = 0; k < union.size(); k++) {
+					boolean has = false;
+					for (int i = 0; i < population.size(); i++) {
+						if(union.get(k).equals(population.get(i))){
+							has = true;
+							break;
+						}
+					}
+					
+					if(!has) {
+						p.add(union.get(k));
+					}
+				}
+				
+				org.femosaa.util.Logger.logSolutionSetWithGeneration(p, "DiscardSolutionSetWithGen.rtf", 
+						evaluations );
+				org.femosaa.util.Logger.logSolutionSetValuesWithGen(p, "DiscardSolutionSetValuesWithGen.rtf", 
+						evaluations );
+				
+			}
+			
 			if(evaluations >= maxEvaluations && time == Long.MAX_VALUE) {
 				time = System.currentTimeMillis();
 			}

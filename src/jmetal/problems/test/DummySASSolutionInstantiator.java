@@ -81,4 +81,10 @@ public class DummySASSolutionInstantiator implements SASSolutionInstantiator {
 		
 	}
 
+	@Override
+	public double[] getWeights() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

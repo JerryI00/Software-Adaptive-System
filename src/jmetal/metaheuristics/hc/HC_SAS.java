@@ -216,10 +216,14 @@ public class HC_SAS extends Algorithm {
 		double cur_fitness = 0.0;
 		double weight	   = 1.0 / (double) problem_.getNumberOfObjectives();
 
-		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
+		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+			if(cur_solution.getObjective(i) == Double.MAX_VALUE/100) {
+				cur_fitness += weight * 1.0;
+			} else {
 			cur_fitness += weight * (nz_[i] != z_[i]? ((cur_solution.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) : 
 				((cur_solution.getObjective(i) - z_[i]) / (nz_[i]))); 
-		
+		   }
+		}
 		if(Double.isNaN(cur_fitness)) {
 			System.out.print("Find one fitness with NaN!\n");
 			cur_fitness = 0;//-1.0e+30;

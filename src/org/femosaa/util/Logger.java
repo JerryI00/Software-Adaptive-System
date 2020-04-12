@@ -44,6 +44,34 @@ public class Logger {
 		
 	}
 	
+	public static synchronized void logSolutionSetFitness(SolutionSet pareto_front, String name){
+		File file = null;
+		if(!(file = new File(prefix)).exists()){
+			file.mkdirs();
+		} 
+		
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(prefix
+					+ name, true));
+
+			String data = "";
+			Iterator itr = pareto_front.iterator();
+			while(itr.hasNext()) {
+				Solution s = (Solution)itr.next();
+				data += s.getFitness();
+				data += "\n";
+			}
+			
+			bw.write(data);
+			bw.write("------------------------\n");
+			bw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 	public static synchronized void logFirstTod(double gen, String name){
 		File file = null;
 		if(!(file = new File(prefix)).exists()){
@@ -83,6 +111,34 @@ public class Logger {
 				for(int i = 0; i < s.numberOfObjectives(); i++) {
 					data +=  s.getObjective(i) + (i ==  s.numberOfObjectives() - 1? "" : ",");
 				}
+				data += "\n";
+			}
+			
+			bw.write(data);
+			bw.write("------------:" + gen + ":------------\n");
+			bw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
+	public static synchronized void logSolutionSetFitnessWithGeneration(SolutionSet pareto_front, String name, int gen){
+		File file = null;
+		if(!(file = new File(prefix)).exists()){
+			file.mkdirs();
+		} 
+		
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(prefix
+					+ name, true));
+
+			String data = "";
+			Iterator itr = pareto_front.iterator();
+			while(itr.hasNext()) {
+				Solution s = (Solution)itr.next();
+				data += s.getFitness();
 				data += "\n";
 			}
 			
@@ -166,6 +222,37 @@ public class Logger {
 			
 			bw.write(data);
 			bw.write("------------------------\n");
+			bw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+		
+	}
+	
+	public static synchronized void logSolutionSetValuesWithGen(SolutionSet pareto_front, String name, int gen){
+		File file = null;
+		if(!(file = new File(prefix)).exists()){
+			file.mkdirs();
+		} 
+		
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(prefix
+					+ name, true));
+
+			String data = "";
+			Iterator itr = pareto_front.iterator();
+			while(itr.hasNext()) {
+				Solution s = (Solution)itr.next();
+				for(int i = 0; i < s.numberOfVariables(); i++) {
+					data +=  s.getDecisionVariables()[i].getValue() + (i ==  s.numberOfVariables() - 1? "" : ",");
+				}
+				data += "\n";
+			}
+			
+			bw.write(data);
+			bw.write("------------:" + gen + ":------------\n");
 			bw.close();
 		} catch (Exception e) {
 			e.printStackTrace();

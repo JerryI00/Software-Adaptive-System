@@ -36,4 +36,6 @@ public interface SASSolutionInstantiator {
 	public void defuzzilizeAndRemove(Solution s, SolutionSet oldPopulation);
 	
 	public double[][] getLambda();
+	
+	public double[] getWeights();
 }

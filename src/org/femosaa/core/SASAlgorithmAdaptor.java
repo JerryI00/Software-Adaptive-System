@@ -22,13 +22,16 @@ public abstract class SASAlgorithmAdaptor {
 	// This can be changed within SSASE
 	public static boolean isPreserveInvalidSolution = false;
 	// This can be changed within SSASE
-	public static boolean isSeedSolution = true;
+	public static boolean isSeedSolution = false;
 	// This can be changed within SSASE
-	public static boolean isLogTheEvalNeededToRemiveNonSeed = true;
+	public static boolean isLogTheEvalNeededToRemiveNonSeed = false;
 	// This is actually number of function evaluation
-	public static int logGenerationOfObjectiveValue = 500;//500;//5000; // <=0 means disabled.
+	public static int logGenerationOfObjectiveValue = 100;//500;//5000; // <=0 means disabled.
 	// This is to control if fuzzy requirement is enable
 	public static boolean isFuzzy = false; 
+	// This is to control if all solutions that have ever been found needs to be recalled
+	public static boolean isLogDiscardedSolutions = true; 
+
 	public static long seed_time = -1;//test only for seeding
 	public Solution execute(SASSolutionInstantiator factory, int[][] vars,
 			int numberOfObjectives_, int numberOfConstraints_)
@@ -63,7 +66,7 @@ public abstract class SASAlgorithmAdaptor {
 		}		
 		if(LOG_SOLUTIONS) {
 			org.femosaa.util.Logger.logSolutionSet(pareto_front, "SolutionSet.rtf");
-			org.femosaa.util.Logger.logPercentageOfMarkedSolution(pareto_front, "HowManyFromSeeds.rtf");
+			//org.femosaa.util.Logger.logPercentageOfMarkedSolution(pareto_front, "HowManyFromSeeds.rtf");
 		}	
 		if(LOG_SOLUTIONS_VALUES) {
 			org.femosaa.util.Logger.logSolutionSetValues(pareto_front, "SolutionSetValue.rtf");
@@ -183,6 +186,6 @@ public abstract class SASAlgorithmAdaptor {
 	}
 
 	protected enum ApproachType {
-		MOEAD_STM_D_K, NSGAII, GP, MIP, IBEA
+		MOEAD_STM_D_K, NSGAII, GP, MIP, IBEA, SGA
 	}
 }
