@@ -176,13 +176,13 @@ public class NSGAII_SAS extends Algorithm {
 //			System.out.print("("+evaluations+","+(no/population.size()) + ")\n");
 			// Create the offSpring solutionSet      
 			offspringPopulation = new SolutionSet(populationSize);
-			Solution[] parents = new Solution[2];
+			Solution[] parents = new Solution[2];		
 			//for (int i = 0; i < (populationSize / 2); i++) {
 			while (offspringPopulation.size() < populationSize) {
 				int c = 2;
 				if (evaluations < maxEvaluations || (evaluations >= maxEvaluations)) {
 					Solution[] offSpring = null;
-					//obtain parents
+					//obtain parents			
 					if(vandInvCoEvolver != null) {
 						//parents[0] = (Solution) vandInvCoEvolver.doMatingSelection(population);
 						//parents[1] = (Solution) vandInvCoEvolver.doMatingSelection(population);
@@ -202,18 +202,26 @@ public class NSGAII_SAS extends Algorithm {
 							}
 						}
 					} 
+				
 					parents[0] = (Solution) selectionOperator.execute(population);
 					parents[1] = (Solution) selectionOperator.execute(population);
+				
 					//offSpring  = new Solution[2];
 					//offSpring[0] = factory.getSolution(parents[0]);
 					//offSpring[1] = factory.getSolution(parents[1]);
+				
 					offSpring = (Solution[]) crossoverOperator.execute(parents);
+					
+					
 					mutationOperator.execute(offSpring[0]);
 					mutationOperator.execute(offSpring[1]);
+					
+					//long test_time = System.currentTimeMillis();
 					problem_.evaluate(offSpring[0]);
 					problem_.evaluateConstraints(offSpring[0]);
 					problem_.evaluate(offSpring[1]);
 					problem_.evaluateConstraints(offSpring[1]);
+					//System.out.print("Evaluation time: " + (System.currentTimeMillis()-test_time) + "\n");
 					if(c == 0) {
 						continue;
 					}
@@ -235,9 +243,10 @@ public class NSGAII_SAS extends Algorithm {
 						((SASSolution)offSpring[0]).isFromInValid = true;
 						((SASSolution)offSpring[1]).isFromInValid = true;
 					}
+					
 				} // if                            
 			} // for
-
+			
 			SolutionSet old_union = null;
 			// Create the solutionSet union of solutionSet and offSpring			
 			if(SASAlgorithmAdaptor.isFuzzy) {			
@@ -249,7 +258,7 @@ public class NSGAII_SAS extends Algorithm {
 			}
 			// Create the solutionSet union of solutionSet and offSpring
 			//union = ((SolutionSet) population).union(offspringPopulation);
-
+			
 			// Ranking the union
 			Ranking ranking = new Ranking(union);
 
@@ -258,10 +267,10 @@ public class NSGAII_SAS extends Algorithm {
 			SolutionSet front = null;
 			population.clear();
 			old_population.clear();
-
+			
 			// Obtain the next front
 			front = ranking.getSubfront(index);
-
+			
 			while ((remain > 0) && (remain >= front.size())) {
 				//Assign crowding distance to individuals
 				distance.crowdingDistanceAssignment(front, problem_.getNumberOfObjectives());
@@ -302,13 +311,13 @@ public class NSGAII_SAS extends Algorithm {
 			if(SASAlgorithmAdaptor.isLogTheEvalNeededToRemiveNonSeed) {
 				org.femosaa.util.Logger.printMarkedSolution(population, evaluations);
 			}
-			
+		
 			
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
 				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
 						evaluations );
-				org.femosaa.util.Logger.logSolutionSetValuesWithGen(population, "SolutionSetValuesWithGen.rtf", 
-						evaluations );
+				//org.femosaa.util.Logger.logSolutionSetValuesWithGen(population, "SolutionSetValuesWithGen.rtf", 
+						//evaluations );
 			}
 			
 			if(SASAlgorithmAdaptor.isLogDiscardedSolutions) {

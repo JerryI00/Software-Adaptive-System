@@ -154,13 +154,14 @@ public class SGA_SAS extends Algorithm {
 				org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
 						"SolutionSetWithGen.rtf", 0);
 			} else {
-				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
-						0);
+				//org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+						//0);
 			}
 		} 
 		double te = 0.0;
+		long time = System.currentTimeMillis();
 		// Generations 
-		while (evaluations < maxEvaluations) {
+		while (evaluations < maxEvaluations || (evaluations >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time )) {
 
 			// Create the offSpring solutionSet
 			offspringPopulation = new SolutionSet(populationSize);
@@ -237,8 +238,11 @@ public class SGA_SAS extends Algorithm {
 				} else {
 					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
 							evaluations );
+					
 				}								
 			}
+			
+			
 
 		} // while
 

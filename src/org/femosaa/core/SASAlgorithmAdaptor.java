@@ -18,7 +18,7 @@ public abstract class SASAlgorithmAdaptor {
 	
 	public static boolean isLogToD = false;
 	public static double d = 14.5;
-	private static final boolean LOG_SOLUTIONS_VALUES = true; /*important*/
+	private static final boolean LOG_SOLUTIONS_VALUES = false; /*important*/
 	// This can be changed within SSASE
 	public static boolean isPreserveInvalidSolution = false;
 	// This can be changed within SSASE
@@ -26,13 +26,14 @@ public abstract class SASAlgorithmAdaptor {
 	// This can be changed within SSASE
 	public static boolean isLogTheEvalNeededToRemiveNonSeed = false;
 	// This is actually number of function evaluation
-	public static int logGenerationOfObjectiveValue = 100;//500;//5000; // <=0 means disabled.
+	public static int logGenerationOfObjectiveValue = 2000;//500;//5000; // <=0 means disabled.
 	// This is to control if fuzzy requirement is enable
 	public static boolean isFuzzy = false; 
 	// This is to control if all solutions that have ever been found needs to be recalled
 	public static boolean isLogDiscardedSolutions = true; 
 
-	public static long seed_time = -1;//test only for seeding
+	// For SGA, this means the total time
+	public static long seed_time = -1;//test only for seeding, -1 means disabled
 	public Solution execute(SASSolutionInstantiator factory, int[][] vars,
 			int numberOfObjectives_, int numberOfConstraints_)
 			throws JMException, SecurityException, IOException,

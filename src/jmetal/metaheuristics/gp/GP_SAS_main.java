@@ -194,7 +194,7 @@ public class GP_SAS_main extends SASAlgorithmAdaptor{
 		parameters.put("distributionIndex", 20.0);
 		// This needs to change in testing.
 		parameters.put("jmetal.metaheuristics.moead.SASSolutionInstantiator", factory);
-		crossover = CrossoverFactory.getCrossoverOperator("TwoPointsCrossover", parameters);
+		crossover = CrossoverFactory.getCrossoverOperator("UniformCrossoverSAS", parameters);
 
 		// Mutation operator
 		parameters = new HashMap();
