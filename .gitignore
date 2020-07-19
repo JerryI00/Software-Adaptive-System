@@ -3,3 +3,4 @@ bin/
 .project
 .settings/
 .log
+.DS_Store
