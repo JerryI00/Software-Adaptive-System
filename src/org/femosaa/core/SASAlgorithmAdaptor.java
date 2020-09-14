@@ -26,11 +26,11 @@ public abstract class SASAlgorithmAdaptor {
 	// This can be changed within SSASE
 	public static boolean isLogTheEvalNeededToRemiveNonSeed = false;
 	// This is actually number of function evaluation
-	public static int logGenerationOfObjectiveValue = 2000;//500;//5000; // <=0 means disabled.
+	public static int logGenerationOfObjectiveValue = -1;//500;//5000; // <=0 means disabled.
 	// This is to control if fuzzy requirement is enable
 	public static boolean isFuzzy = false; 
 	// This is to control if all solutions that have ever been found needs to be recalled
-	public static boolean isLogDiscardedSolutions = true; 
+	public static boolean isLogDiscardedSolutions = false; 
 
 	// For SGA, this means the total time
 	public static long seed_time = -1;//test only for seeding, -1 means disabled
