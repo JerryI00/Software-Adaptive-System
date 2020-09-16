@@ -53,7 +53,7 @@ public class EAConfigure {
 	}
 	
 	public void setupNRPConfiguration(){
-		con = new EAConfigure(100, 2000, 0.8,  0.01);//0.1
+		con = new EAConfigure(100, 50, 0.8,  0.01);//0.1
 		//con = new EAConfigure(100, 200, 0.8,  0.01);//0.1
 	}
 	

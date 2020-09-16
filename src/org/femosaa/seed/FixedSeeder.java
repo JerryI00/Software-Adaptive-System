@@ -35,7 +35,8 @@ public class FixedSeeder extends Seeder{
 			SASSolutionInstantiator factory, Problem problem_,
 			int populationSize) throws JMException {
 		Solution newSolution;
-		for (int i = 0; i < populationSize; i++) {
+		int l = populationSize/2;
+		for (int i = 0; i < l; i++) {
 			newSolution = factory.getSolution(problem_);
 			String[] d = seeds.get(i).split(":");
 			for (int j = 0; j < newSolution.getDecisionVariables().length; j++) {
@@ -47,6 +48,16 @@ public class FixedSeeder extends Seeder{
 		
 			//System.out.print("Solution " + newSolution.getObjective(0) + "-" + newSolution.getObjective(1)+"\n");
 		} 
+		
+		if(population.size() < populationSize) {
+			int s = population.size();
+			for (int i = 0; i < populationSize - s; i++) {
+				newSolution = factory.getSolution(problem_);
+				problem_.evaluate(newSolution);
+				problem_.evaluateConstraints(newSolution);
+				population.add(newSolution);
+			}
+		}
 	}
 
 }

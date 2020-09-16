@@ -24,6 +24,7 @@ package jmetal.metaheuristics.sga;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
 import org.femosaa.core.SASSolutionInstantiator;
+import org.femosaa.seed.Seeder;
 
 import jmetal.core.*;
 import jmetal.util.comparators.CrowdingComparator;
@@ -37,7 +38,7 @@ import jmetal.util.*;
 public class SGA_SAS extends Algorithm {
 
 	private SASSolutionInstantiator factory = null;
-	
+	private Seeder seeder = null;
 
 	// ideal point
 	double[] z_;
@@ -91,7 +92,9 @@ public class SGA_SAS extends Algorithm {
 
 		// knee point which might be used as the output
 		Solution kneeIndividual = factory.getSolution(problem_);
-
+		if(getInputParameter("seeder") != null) {
+			seeder = (Seeder)getInputParameter("seeder");
+		}
 		SolutionSet population;
 		SolutionSet offspringPopulation;
 		SolutionSet union;
@@ -128,13 +131,18 @@ public class SGA_SAS extends Algorithm {
 		
 		// Create the initial solutionSet
 		Solution newSolution;
-		for (int i = 0; i < populationSize; i++) {
-			newSolution = factory.getSolution(problem_);
-			problem_.evaluate(newSolution);
-			problem_.evaluateConstraints(newSolution);
-			evaluations++;
-			population.add(newSolution);
-		} //for       
+		if (seeder != null) {
+			seeder.seeding(population, factory, problem_, populationSize);
+			evaluations += populationSize;
+		} else {
+			for (int i = 0; i < populationSize; i++) {
+				newSolution = factory.getSolution(problem_);
+				problem_.evaluate(newSolution);
+				problem_.evaluateConstraints(newSolution);
+				evaluations++;
+				population.add(newSolution);
+			} //for   
+		}
 
 		initIdealPoint();
 		initNadirPoint();
