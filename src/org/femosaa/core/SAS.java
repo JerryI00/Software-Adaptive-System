@@ -75,6 +75,7 @@ public class SAS extends Problem {
 		// can be done from my end.
 		double[] f = sol.getObjectiveValuesFromIndexValue();
 		sol.updateNormalizationBounds(f);
+		//System.out.print("Solution " + f[0] + " : " +  f[1] + "\n");
 		for (int i = 0; i < f.length ; i ++) {
 			solution.setObjective(i, f[i]);
 		}

@@ -52,6 +52,7 @@ import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASProblemFactory;
 import org.femosaa.core.SASSolutionInstantiator;
 import org.femosaa.invalid.SASValidityAndInvalidityCoEvolver;
+import org.femosaa.seed.FixedSeeder;
 import org.femosaa.seed.NewSeeder;
 import org.femosaa.seed.Seeder;
 
@@ -230,7 +231,8 @@ public class NSGA2_SAS_main extends SASAlgorithmAdaptor{
 		
 		if(SASAlgorithmAdaptor.isSeedSolution) {
 			//algorithm.setInputParameter("seeder", new Seeder(mutation));	
-			algorithm.setInputParameter("seeder", NewSeeder.getInstance(mutation));			
+			//algorithm.setInputParameter("seeder", NewSeeder.getInstance(mutation));
+			algorithm.setInputParameter("seeder", FixedSeeder.getInstance());	
 		}
 
 		selection = SelectionFactory.getSelectionOperator("BinaryTournament2", parameters);
