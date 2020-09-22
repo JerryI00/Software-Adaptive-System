@@ -41,7 +41,7 @@ public class EAConfigure {
 	}
 	
 	public void setupWSConfiguration(){
-		con = new EAConfigure(100, 10000, 0.9,  0.1);
+		con = new EAConfigure(100, 100, 0.9,  0.1);
 		//con = new EAConfigure(100, 300, 0.9,  0.1);
 		//seeding 100 AS - 
 		//con = new EAConfigure(100, 500, 0.8, 0.02);
@@ -53,7 +53,7 @@ public class EAConfigure {
 	}
 	
 	public void setupNRPConfiguration(){
-		con = new EAConfigure(100, 50, 0.8,  0.01);//0.1
+		con = new EAConfigure(100, 200, 0.8,  0.01);//0.1
 		//con = new EAConfigure(100, 200, 0.8,  0.01);//0.1
 	}
 	

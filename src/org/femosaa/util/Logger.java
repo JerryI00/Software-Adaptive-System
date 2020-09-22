@@ -11,7 +11,7 @@ import jmetal.core.Solution;
 import jmetal.core.SolutionSet;
 
 public class Logger {
-	public static String prefix = "/Users/tao/research/monitor/ws-soa/sas/";
+	public static String prefix = "/Users/"+System.getProperty("user.name")+"/research/monitor/ws-soa/sas/";
 	// This attribute is only used for testing
 	public static int max_number_of_eval_to_have_only_seed = 0;
 	public static synchronized void logSolutionSet(SolutionSet pareto_front, String name){
