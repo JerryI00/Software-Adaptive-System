@@ -38,4 +38,8 @@ public interface SASSolutionInstantiator {
 	public double[][] getLambda();
 	
 	public double[] getWeights();
+	
+	public int record(SolutionSet set);
+	
+	public int record(Solution s);
 }

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.Iterator;
 
+import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASSolution;
 
 import jmetal.core.Solution;
@@ -116,6 +117,33 @@ public class Logger {
 			
 			bw.write(data);
 			bw.write("------------:" + gen + ":------------\n");
+			bw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
+	public static synchronized void logFinalEvaluation(String name, int gen){
+		if(EAConfigure.getInstance().measurement == -1) {
+			return;
+		}
+		
+		
+		File file = null;
+		if(!(file = new File(prefix)).exists()){
+			file.mkdirs();
+		} 
+		
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(prefix
+					+ name, true));
+
+			String data = gen + "\n";
+			
+			bw.write(data);
+			//bw.write("------------:" + gen + ":------------\n");
 			bw.close();
 		} catch (Exception e) {
 			e.printStackTrace();

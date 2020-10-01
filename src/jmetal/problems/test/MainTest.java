@@ -6,7 +6,7 @@ import org.femosaa.core.SASSolution;
 import jmetal.core.Problem;
 import jmetal.core.Solution;
 import jmetal.core.SolutionSet;
-import jmetal.metaheuristics.moead.MOEAD_SAS_main;
+import jmetal.metaheuristics.moead.MOEAD_STM_SAS_main;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -21,7 +21,7 @@ public class MainTest extends TestCase{
 			
 			DummySASSolutionInstantiator inst = new DummySASSolutionInstantiator();
 			
-			MOEAD_SAS_main main = new MOEAD_SAS_main();
+			MOEAD_STM_SAS_main main = new MOEAD_STM_SAS_main();
 			SASSolution.init(DummySASSolution.testOptionalVariables);
 			Solution s = main.execute(inst, DummySASSolution.vars, 2, 0);
 	

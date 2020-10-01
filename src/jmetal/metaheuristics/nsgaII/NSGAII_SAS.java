@@ -23,6 +23,7 @@ package jmetal.metaheuristics.nsgaII;
 
 import java.util.Iterator;
 
+import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
 import org.femosaa.core.SASSolutionInstantiator;
@@ -82,6 +83,7 @@ public class NSGAII_SAS extends Algorithm {
 		int populationSize;
 		int maxEvaluations;
 		int evaluations;
+		int measurement;
 
 		int requiredEvaluations; // Use in the example of use of the
 		// indicators object (see below)
@@ -111,6 +113,7 @@ public class NSGAII_SAS extends Algorithm {
 		//Initialize the variables
 		population = new SolutionSet(populationSize);
 		evaluations = 0;
+		measurement = 0;
 
 		requiredEvaluations = 0;
 
@@ -123,6 +126,7 @@ public class NSGAII_SAS extends Algorithm {
 		if (seeder != null) {
 			seeder.seeding(population, factory, problem_, populationSize);
 			evaluations += populationSize;
+			measurement += factory.record(population);
 		} else {
 			// Create the initial solutionSet			
 			for (int i = 0; i < populationSize; i++) {
@@ -130,6 +134,7 @@ public class NSGAII_SAS extends Algorithm {
 				problem_.evaluate(newSolution);
 				problem_.evaluateConstraints(newSolution);
 				evaluations++;
+				measurement += factory.record(newSolution);
 				population.add(newSolution);
 			} //for 
 		}
@@ -163,6 +168,12 @@ public class NSGAII_SAS extends Algorithm {
 		// Generations 
 		while (evaluations < maxEvaluations || (evaluations >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time )) {
 			System.out.print("no" + evaluations + "***eval\n");
+			
+			if(EAConfigure.getInstance().measurement == measurement) {
+				break;
+			}
+			
+			
 		
 //
 //			Iterator itr = population.iterator();
@@ -219,8 +230,16 @@ public class NSGAII_SAS extends Algorithm {
 					//long test_time = System.currentTimeMillis();
 					problem_.evaluate(offSpring[0]);
 					problem_.evaluateConstraints(offSpring[0]);
+					measurement += factory.record(offSpring[0]);
+					if(EAConfigure.getInstance().measurement == measurement) {
+						break;
+					}
 					problem_.evaluate(offSpring[1]);
 					problem_.evaluateConstraints(offSpring[1]);
+					measurement += factory.record(offSpring[1]);
+					if(EAConfigure.getInstance().measurement == measurement) {
+						break;
+					}
 					//System.out.print("Evaluation time: " + (System.currentTimeMillis()-test_time) + "\n");
 					if(c == 0) {
 						continue;
@@ -314,10 +333,27 @@ public class NSGAII_SAS extends Algorithm {
 		
 			
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
-				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
-						evaluations );
+				if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithGen.rtf", 
+							evaluations );
+				} else {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+							evaluations );
+				}
+				
 				//org.femosaa.util.Logger.logSolutionSetValuesWithGen(population, "SolutionSetValuesWithGen.rtf", 
 						//evaluations );
+			}
+			
+			if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
+				if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithMeasurement.rtf", 
+							measurement );
+				} else {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithMeasurement.rtf", 
+							measurement );
+				}
+				
 			}
 			
 			if(SASAlgorithmAdaptor.isLogDiscardedSolutions) {
@@ -357,12 +393,23 @@ public class NSGAII_SAS extends Algorithm {
 //			}
 //		}
 //		System.out.print("("+evaluations+","+(no/population.size()) + ")\n");
+		
+		
+		
 		if(SASAlgorithmAdaptor.isFuzzy) {
 			population = old_population;
+			org.femosaa.util.Logger.logFinalEvaluation("FinalEvaluationCount.rtf", evaluations);
 		}
+		
+		/*if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
+			org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithMeasurement.rtf", 
+					measurement );
+		}*/
 		// Return as output parameter the required evaluations
 		setOutputParameter("evaluations", requiredEvaluations);
 		population_ = population;
+		
+		System.out.print("-------final evalution: " + evaluations + "-------\n");
 		
 		// Return the first non-dominated front
 //		Ranking ranking = new Ranking(population);

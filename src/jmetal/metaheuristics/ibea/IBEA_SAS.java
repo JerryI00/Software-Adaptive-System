@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
 import org.femosaa.core.SASSolutionInstantiator;
@@ -314,7 +315,8 @@ public class IBEA_SAS extends Algorithm {
 		int populationSize;
 		int archiveSize;
 
-		int maxEvaluations, evaluations;
+		int maxEvaluations, evaluations, measurement;
+		measurement = 0;
 		Operator crossoverOperator, mutationOperator, selectionOperator;
 		SolutionSet solutionSet, archive, offSpringSolutionSet;
 
@@ -346,12 +348,14 @@ public class IBEA_SAS extends Algorithm {
 		if (seeder != null) {
 			seeder.seeding(solutionSet, factory, problem_, populationSize);
 			evaluations += populationSize;
+			measurement += factory.record(solutionSet);
 		} else {
 			for (int i = 0; i < populationSize; i++) {
 				newSolution = factory.getSolution(problem_);
 				problem_.evaluate(newSolution);
 				problem_.evaluateConstraints(newSolution);
 				evaluations++;
+				measurement += factory.record(newSolution);
 				solutionSet.add(newSolution);
 			}
 		}
@@ -382,6 +386,13 @@ public class IBEA_SAS extends Algorithm {
 
 		long time = Long.MAX_VALUE;
 		while (evaluations < maxEvaluations|| (evaluations >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time  )) {
+			
+			
+			if(EAConfigure.getInstance().measurement == measurement) {
+				break;
+			}
+			
+			
 			
 			SolutionSet old_union = null;
 			SolutionSet union = null;
@@ -449,6 +460,10 @@ public class IBEA_SAS extends Algorithm {
 				mutationOperator.execute(offSpring[0]);
 				problem_.evaluate(offSpring[0]);
 				problem_.evaluateConstraints(offSpring[0]);
+				measurement += factory.record(offSpring[0]);
+				if(EAConfigure.getInstance().measurement == measurement) {
+					break;
+				}
 				if(offSpringSolutionSet.size() >= populationSize) {
 					break;
 				}
@@ -468,9 +483,25 @@ public class IBEA_SAS extends Algorithm {
 			solutionSet = offSpringSolutionSet; 
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0 
 					&& evaluations > 0) {
-				org.femosaa.util.Logger.logSolutionSetWithGeneration(archive, "SolutionSetWithGen.rtf", 
-						evaluations);
+				if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithGen.rtf", 
+							evaluations );
+				} else {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(archive, "SolutionSetWithGen.rtf", 
+							evaluations );
+				}
 			}
+			
+			if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
+				if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithMeasurement.rtf", 
+							measurement );
+				} else {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(archive, "SolutionSetWithMeasurement.rtf", 
+							measurement );
+				}
+			}
+			
 			if(evaluations >= maxEvaluations && time == Long.MAX_VALUE) {
 				time = System.currentTimeMillis();
 			}
@@ -478,7 +509,13 @@ public class IBEA_SAS extends Algorithm {
 
 		if(SASAlgorithmAdaptor.isFuzzy) {
 			archive = old_population;
+			org.femosaa.util.Logger.logFinalEvaluation("FinalEvaluationCount.rtf", evaluations);
 		}
+		
+		/*if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
+			org.femosaa.util.Logger.logSolutionSetWithGeneration(archive, "SolutionSetWithMeasurement.rtf", 
+					measurement );
+		}*/
 		// 
 //		Ranking ranking = new Ranking(archive);
 //		return ranking.getSubfront(0); 

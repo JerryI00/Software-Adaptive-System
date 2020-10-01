@@ -87,4 +87,16 @@ public class DummySASSolutionInstantiator implements SASSolutionInstantiator {
 		return null;
 	}
 
+	@Override
+	public int record(SolutionSet set) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int record(Solution s) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

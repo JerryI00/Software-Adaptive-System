@@ -1,7 +1,9 @@
 package org.femosaa.core;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import jmetal.core.Solution;
 import jmetal.core.SolutionSet;
@@ -31,6 +33,10 @@ public abstract class SASAlgorithmAdaptor {
 	public static boolean isFuzzy = false; 
 	// This is to control if all solutions that have ever been found needs to be recalled
 	public static boolean isLogDiscardedSolutions = false; 
+	
+	public static boolean logMeasurementOfObjectiveValue = true;
+	
+	
 
 	// For SGA, this means the total time
 	public static long seed_time = -1;//test only for seeding, -1 means disabled
@@ -172,6 +178,7 @@ public abstract class SASAlgorithmAdaptor {
 		System.out.print(invalid2);
     }
 	
+
 //	protected void logDependencyAfterEvolution(
 //			SolutionSet pareto_front_without_ranking) {
 //	}

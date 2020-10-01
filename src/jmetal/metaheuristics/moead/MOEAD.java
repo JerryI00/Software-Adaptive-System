@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
+import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
 import org.femosaa.core.SASSolutionInstantiator;
@@ -46,7 +47,7 @@ import org.femosaa.seed.Seeder;
  * 
  */
 
-public class MOEAD_STM_SAS_STATIC extends Algorithm {
+public class MOEAD extends Algorithm {
 
 	private int populationSize_;
 	
@@ -87,7 +88,7 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
   	 * Constructor
   	 * @param problem Problem to solve
   	 */
-	private MOEAD_STM_SAS_STATIC(Problem problem) {
+	private MOEAD(Problem problem) {
 		super(problem);
 		functionType_ = "Norm_ITCH";
 	}
@@ -96,10 +97,11 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
   	 * Constructor
   	 * @param problem Problem to solve
   	 */
-	public MOEAD_STM_SAS_STATIC(Problem problem, SASSolutionInstantiator factory) {
+	public MOEAD(Problem problem, SASSolutionInstantiator factory) {
 		super(problem);
         this.factory = factory;
 		functionType_ = "Norm_ITCH";
+		//functionType_ = "Norm_TCH";
 	}
 	
 	public SolutionSet execute() throws JMException, ClassNotFoundException {
@@ -108,7 +110,7 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 			throw new RuntimeException("No instance of SASSolutionInstantiator found!");
 		}
 		
-		int type;
+		int type = 1;
 		int maxEvaluations;
 		
 		// knee point which might be used as the output
@@ -120,15 +122,20 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 		dataDirectory_  = this.getInputParameter("dataDirectory").toString();
 		maxEvaluations  = ((Integer) this.getInputParameter("maxEvaluations")).intValue();
 		populationSize_ = ((Integer) this.getInputParameter("populationSize")).intValue();
+		int measurement = 0;
 
 		population_  = new SolutionSet(populationSize_);
 
 		T_ 	   = 20;
 		delta_ = 0.9;
+		
+		if(populationSize_ < T_) {
+			T_ = populationSize_/2;
+		}
 
 		z_ 			  = new double[problem_.getNumberOfObjectives()];
 	    nz_ 		  = new double[problem_.getNumberOfObjectives()];
-	    lambda_ 	  = new double[populationSize_][problem_.getNumberOfObjectives()];
+	    lambda_ 	  = factory.getLambda();//new double[populationSize_][problem_.getNumberOfObjectives()];
 	    neighborhood_ = new int[populationSize_][T_];
 
 		crossover_ = operators_.get("crossover");
@@ -143,20 +150,40 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 		if (seeder != null) {
 			seeder.seeding(population_, factory, problem_, populationSize_);
 			evaluations_ += populationSize_;
+			measurement += factory.record(population_);
 		} else {
-		    initPopulation();
+		    //initPopulation();
+			  for (int i = 0; i < populationSize_; i++) {
+			      Solution newSolution = factory.getSolution(problem_);
+
+			      problem_.evaluate(newSolution);
+			      evaluations_++;
+			      population_.add(newSolution) ;
+			      measurement += factory.record(newSolution);
+			      //savedValues_[i] = factory.getSolution(newSolution);
+			    }
 		}
 		// STEP 1.3. initialize the ideal and nadir points
 		initIdealPoint();
 		initNadirPoint();
 		long time = Long.MAX_VALUE;
+		
+		
+		SolutionSet old_population = new SolutionSet(populationSize_);
+		if(SASAlgorithmAdaptor.isFuzzy) {
+			old_population = population_;
+			population_ = factory.fuzzilize(population_);
+		}
+		
+		
 		/* STEP 2. UPDATE */
 		do {
 			int[] permutation = new int[populationSize_];
 			Utils.randomPermutation(permutation, populationSize_);
-			currentOffspring_   = new SolutionSet(2 * populationSize_);
-			for (int i = 0; i < populationSize_; i++) {
-				int n = permutation[i]; // or int n = i;
+			currentOffspring_   = new SolutionSet(populationSize_);//new SolutionSet(2 * populationSize_);
+			
+			for (int i = 0; i < populationSize_/2; i++) {
+			    int n = permutation[i]; // or int n = i;
 				// int n = i ; // or int n = i;
 				double rnd = PseudoRandom.randDouble();
 
@@ -177,7 +204,15 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 				mutation_.execute(children[1]);
 				// evaluation
 				problem_.evaluate(children[0]);
+				measurement += factory.record(children[0]);
+				if(EAConfigure.getInstance().measurement == measurement) {
+					break;
+				}
 				problem_.evaluate(children[1]);
+				measurement += factory.record(children[1]);
+				if(EAConfigure.getInstance().measurement == measurement) {
+					break;
+				}
 				evaluations_++;
 
 				// STEP 2.3. update the ideal and nadir points
@@ -198,20 +233,92 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 			} // for
 			
 			// Combine the parent and the current offspring populations
-			union_ = ((SolutionSet) population_).union(currentOffspring_);
+			//union_ = ((SolutionSet) population_).union(currentOffspring_);
+			
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				SolutionSet union = ((SolutionSet) old_population).union(currentOffspring_);
+				SolutionSet old_union = union;
+				union = factory.fuzzilize(union);
+				old_population.clear();
+				population_.clear();
+				//System.out.print("fuzzy----\n");
+				for (int i = 0; i < populationSize_; i++) {
+					population_.add(union.get(i));
+					//System.out.print(population_.get(i).getObjective(0) + " : " + population_.get(i).getObjective(1)+"\n");
+				}
+				
+				for (int i = 0; i < union.size() - populationSize_; i++) {
+					this.updateNeighborhood(union.get(populationSize_+i), i, type);
+					//this.updateNeighborhood(union.get(populationSize_+i*2), i, type);
+					//this.updateNeighborhood(union.get(populationSize_+i*2+1), i, type);
+				}
+				
+				for (int i = 0; i < population_.size(); i++) {
+					old_population.add(factory.defuzzilize(population_.get(i), old_union));
+					//System.out.print("original: " + old_population.get(i).getObjective(0) + " : " + old_population.get(i).getObjective(1)+"\n");
+					//System.out.print("fuzzy: " + population_.get(i).getObjective(0) + " : " + population_.get(i).getObjective(1)+"\n");
+					
+				}
+				//System.out.print("----\n");
+				
+
+				
+			} else {
+				/*for (int i = 0; i < populationSize_/2; i++) {
+					this.updateNeighborhood(currentOffspring_.get(i*2), i, type);
+					this.updateNeighborhood(currentOffspring_.get(i*2+1), i, type);
+				}*/
+				
+				for (int i = 0; i < populationSize_; i++) {
+					this.updateNeighborhood(currentOffspring_.get(i), i, type);
+				}
+			}
+			
+			
+			
 
 			// selection process
-			selection();
+			//selection();
 			if(SASAlgorithmAdaptor.isLogTheEvalNeededToRemiveNonSeed) {
 				org.femosaa.util.Logger.printMarkedSolution(population_, evaluations_);
 			}
-			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0&& evaluations_%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
+			/*if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0&& evaluations_%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
 				org.femosaa.util.Logger.logSolutionSetWithGeneration(population_, "SolutionSetWithGen.rtf", 
 						evaluations_);
-			}
+			}*/
 			if(evaluations_ >= maxEvaluations && time == Long.MAX_VALUE) {
 				time = System.currentTimeMillis();
 			}
+			
+			
+			if(EAConfigure.getInstance().measurement == measurement) {
+				break;
+			}
+			
+			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations_%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
+				if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithGen.rtf", 
+							evaluations_ );
+				} else {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(population_, "SolutionSetWithGen.rtf", 
+							evaluations_ );
+				}
+				
+				//org.femosaa.util.Logger.logSolutionSetValuesWithGen(population, "SolutionSetValuesWithGen.rtf", 
+						//evaluations );
+			}
+			
+			if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
+				if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithMeasurement.rtf", 
+							measurement );
+				} else {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(population_, "SolutionSetWithMeasurement.rtf", 
+							measurement );
+				}
+				
+			}
+		
 		} while (evaluations_ <= maxEvaluations|| (evaluations_ >= maxEvaluations && (System.currentTimeMillis() - time) < -1 ));
 		
 		// find the knee point
@@ -224,6 +331,15 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 //			population_.clear();
 //			population_.add(kneeIndividual);
 //		}
+		if(SASAlgorithmAdaptor.isFuzzy) {
+			population_ = old_population;
+			org.femosaa.util.Logger.logFinalEvaluation("FinalEvaluationCount.rtf", evaluations_);
+		}
+		
+		/*if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
+			org.femosaa.util.Logger.logSolutionSetWithGeneration(population_, "SolutionSetWithMeasurement.rtf", 
+					measurement );
+		}*/
 		
 		return population_;
 
@@ -236,6 +352,48 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 		Ranking ranking = new Ranking(population);
 		return ranking.getSubfront(0);
 	}
+	
+	protected  void updateNeighborhood(Solution individual, int subProblemId, int neighborType) {
+	    int size;
+	    int time;
+
+	    time = 0;
+
+	    if (neighborType == 1) {
+	      size = neighborhood_[subProblemId].length;
+	    } else {
+	      size = population_.size();
+	    }
+	    int[] perm = new int[size];
+
+	    Utils.randomPermutation(perm, size);
+	    int maximumNumberOfReplacedSolutions = size;
+	    for (int i = 0; i < size; i++) {
+	      int k;
+	      if (neighborType == 1) {
+	        k = neighborhood_[subProblemId][perm[i]];
+	      } else {
+	        k = perm[i];
+	      }
+	      double f1, f2;
+
+	      f1 = fitnessFunction(population_.get(k), lambda_[k]);
+	      f2 = fitnessFunction(individual, lambda_[k]);
+	      
+	      //System.out.print("f1: " + f1 + ", f2: " + f2 + "\n");
+
+	      if (f2 < f1) {
+	        population_.replace(k, factory.getSolution(individual));
+	        time++;
+	      }
+
+	   
+	      
+	      if (time >= maximumNumberOfReplacedSolutions) {
+	        return;
+	      }
+	    }
+	  }
 	
 	/**
   	 * Select the next parent population, based on the stable matching criteria
@@ -557,6 +715,7 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
       problem_.evaluate(newSolution);
       evaluations_++;
       population_.add(newSolution) ;
+      //measurement += factory.record(newSolution);
       //savedValues_[i] = factory.getSolution(newSolution);
     }
   }
@@ -698,12 +857,17 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 		return selected;
 	}
 
+
    	/**
    	 * Update the ideal point, it is just an approximation with the best value for each objective
    	 * @param individual
    	 */
 	void updateReference(Solution individual) {
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				z_[i] = 0.0;
+				continue;
+			}
 			if (individual.getObjective(i) < z_[i])
 				z_[i] = individual.getObjective(i);
 		}
@@ -716,10 +880,15 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
   	 */
 	void updateNadirPoint(Solution individual) {
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-			if (individual.getObjective(i) > nz_[i])
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				nz_[i] = 1.0;
+				continue;
+			}
+			if (individual.getObjective(i) != Double.MAX_VALUE/100 && individual.getObjective(i) > nz_[i])
 				nz_[i] = individual.getObjective(i);
 		}
 	}
+	
 	
 	/**
 	 * Calculate the dot product of two vectors
@@ -764,7 +933,11 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 			double maxFun = -1.0e+30;
 
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-				double diff = Math.abs(individual.getObjective(i) - z_[i]);
+				double d = individual.getObjective(i);
+				if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+					d = nz_[i];
+				}
+				double diff = Math.abs(d- z_[i]);
 
 				double feval;
 				if (lambda[i] == 0) {
@@ -782,10 +955,14 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 			double[] normalized_obj = new double[problem_.getNumberOfObjectives()];
 			
 			// normalization
-			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) 
+			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+				if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+					normalized_obj[i] = 1.0;
+				} else { 
 				normalized_obj[i] = nz_[i] != z_[i]? Math.abs((individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) :
 					Math.abs((individual.getObjective(i)- z_[i]) / (nz_[i]));
-			
+			   }
+		    }
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 				double diff = normalized_obj[i];//Math.abs(individual.getObjective(i));
 				
@@ -802,7 +979,11 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 			double max_fun = -1.0e+30;
 			
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-				double diff = (individual.getObjective(i) - z_[i]);
+				double d = individual.getObjective(i);
+				if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+					d = nz_[i];
+				}
+				double diff = (d - z_[i]);
 				double feval;
 				if (lambda[i] == 0)
 					feval = 0.000001 * diff;
@@ -817,11 +998,15 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 			double[] normalized_obj = new double[problem_.getNumberOfObjectives()];
 			
 			// normalization
-			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) 
-				normalized_obj[i] = (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]);
-			
+			for (int i = 0; i < problem_.getNumberOfObjectives(); i++)  {
+				if(individual.getObjective(i) == Double.MAX_VALUE/100) {
+					normalized_obj[i] = 1.0;
+				} else {
+				 normalized_obj[i] = (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]);
+			    }
+			}
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-				double diff = Math.abs(individual.getObjective(i));
+				double diff = individual.getObjective(i) == Double.MAX_VALUE/100? Math.abs(nz_[i]) : Math.abs(individual.getObjective(i));
 				double feval;
 				if (lambda[i] == 0)
 					feval = 0.000001 * diff;
@@ -847,14 +1032,15 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 
 			// difference beween current point and reference point
 			for (int n = 0; n < problem_.getNumberOfObjectives(); n++)
-				realA[n] = (individual.getObjective(n) - z_[n]);
+				realA[n] = individual.getObjective(n) == Double.MAX_VALUE/100? (nz_[n] - z_[n]) : (individual.getObjective(n) - z_[n]);
 
 			// distance along the line segment
 			double d1 = Math.abs(innerproduct(realA, lambda));
 
 			// distance to the line segment
 			for (int n = 0; n < problem_.getNumberOfObjectives(); n++)
-				realB[n] = (individual.getObjective(n) - (z_[n] + d1
+				realB[n] = individual.getObjective(n) == Double.MAX_VALUE/100? (nz_[n]  - (z_[n] + d1
+						* lambda[n])) : (individual.getObjective(n) - (z_[n] + d1
 						* lambda[n]));
 			double d2 = norm_vector(realB);
 
@@ -866,6 +1052,116 @@ public class MOEAD_STM_SAS_STATIC extends Algorithm {
 		}
 		return fitness;
 	}
+//	double fitnessFunction(Solution individual, double[] lambda) {
+//		double fitness;
+//		fitness = 0.0;
+//
+//		if (functionType_.equals("ITCH")) {
+//			double maxFun = -1.0e+30;
+//
+//			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+//				double diff = Math.abs(individual.getObjective(i) - z_[i]);
+//
+//				double feval;
+//				if (lambda[i] == 0) {
+//					feval = diff / 0.000001;
+//				} else {
+//					feval = diff / lambda[i];
+//				}
+//				if (feval > maxFun) {
+//					maxFun = feval;
+//				}
+//			}
+//			fitness = maxFun;
+//		} else if (functionType_.equals("Norm_ITCH"))  {
+//			double maxFun = -1.0e+30;
+//			double[] normalized_obj = new double[problem_.getNumberOfObjectives()];
+//			
+//			// normalization
+//			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) 
+//				normalized_obj[i] = nz_[i] != z_[i]? Math.abs((individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) :
+//					Math.abs((individual.getObjective(i)- z_[i]) / (nz_[i]));
+//			
+//			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+//				double diff = normalized_obj[i];//Math.abs(individual.getObjective(i));
+//				
+//				double feval;
+//				if (lambda[i] == 0)
+//					feval = diff / 0.000001;
+//				else
+//					feval = diff / lambda[i];
+//				if (feval > maxFun)
+//					maxFun = feval;
+//			}
+//			fitness = maxFun;
+//		} else if (functionType_.equals("TCH")) {			
+//			double max_fun = -1.0e+30;
+//			
+//			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+//				double diff = (individual.getObjective(i) - z_[i]);
+//				double feval;
+//				if (lambda[i] == 0)
+//					feval = 0.000001 * diff;
+//				else
+//					feval = diff * lambda[i];
+//				if (feval > max_fun)
+//					max_fun = feval;
+//			}
+//			fitness = max_fun;
+//		} else if (functionType_.equals("Norm_TCH")) {
+//			double max_fun = -1.0e+30;
+//			double[] normalized_obj = new double[problem_.getNumberOfObjectives()];
+//			
+//			// normalization
+//			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) 
+//				normalized_obj[i] = (individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i]);
+//			
+//			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+//				double diff = Math.abs(individual.getObjective(i));
+//				double feval;
+//				if (lambda[i] == 0)
+//					feval = 0.000001 * diff;
+//				else
+//					feval = diff * lambda[i];
+//				if (feval > max_fun)
+//					max_fun = feval;
+//			}
+//			
+//			fitness = max_fun;
+//		} else if (functionType_.equals("PBI"))
+//		{
+//			double theta; // penalty parameter
+//			theta = 5.0;
+//
+//			// normalize the weight vector (line segment)
+//			double nd = norm_vector(lambda);
+//			for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
+//				lambda[i] = lambda[i] / nd;
+//
+//			double[] realA = new double[problem_.getNumberOfObjectives()];
+//			double[] realB = new double[problem_.getNumberOfObjectives()];
+//
+//			// difference beween current point and reference point
+//			for (int n = 0; n < problem_.getNumberOfObjectives(); n++)
+//				realA[n] = (individual.getObjective(n) - z_[n]);
+//
+//			// distance along the line segment
+//			double d1 = Math.abs(innerproduct(realA, lambda));
+//
+//			// distance to the line segment
+//			for (int n = 0; n < problem_.getNumberOfObjectives(); n++)
+//				realB[n] = (individual.getObjective(n) - (z_[n] + d1
+//						* lambda[n]));
+//			double d2 = norm_vector(realB);
+//
+//			fitness = d1 + theta * d2;
+//		} else {
+//			System.out.println("MOEAD.fitnessFunction: unknown type "
+//					+ functionType_);
+//			System.exit(-1);
+//		}
+//		return fitness;
+//	}
 	
 	/**
 	 * This is used to find the knee point from a set of solutions

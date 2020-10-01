@@ -12,6 +12,7 @@ import org.femosaa.core.SAS;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolutionInstantiator;
 import org.femosaa.invalid.SASValidityAndInvalidityCoEvolver;
+import org.femosaa.seed.FixedSeeder;
 import org.femosaa.seed.NewSeeder;
 
 import jmetal.core.Solution;
@@ -22,7 +23,7 @@ import jmetal.util.Configuration;
 import jmetal.util.JMException;
 import jmetal.util.PseudoRandom;
 
-public class MOEAD_SAS_PLAIN_main extends MOEAD_SAS_main{
+public class MOEAD_main extends MOEAD_STM_SAS_main{
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected SolutionSet findParetoFront(SASSolutionInstantiator factory, int[][] vars,  int numberOfObjectives_, int numberOfConstraints_) throws JMException,
@@ -40,7 +41,7 @@ public class MOEAD_SAS_PLAIN_main extends MOEAD_SAS_main{
 		problem = new SAS("SASSolutionType", factory, vars, numberOfObjectives_, numberOfConstraints_);
 		
 		//algorithm = new MOEAD_STM_SAS_STATIC(problem, factory);
-		algorithm = new MOEAD_STM_SAS(problem, factory);
+		algorithm = new MOEAD(problem, factory);
 
 		// Algorithm parameters
 	
@@ -82,7 +83,8 @@ public class MOEAD_SAS_PLAIN_main extends MOEAD_SAS_main{
 		
 		if(SASAlgorithmAdaptor.isSeedSolution) {
 			//algorithm.setInputParameter("seeder", new Seeder(mutation));	
-			algorithm.setInputParameter("seeder", NewSeeder.getInstance(mutation));			
+			//algorithm.setInputParameter("seeder", NewSeeder.getInstance(mutation));
+			algorithm.setInputParameter("seeder", FixedSeeder.getInstance());	
 		}
 
 		algorithm.addOperator("crossover", crossover);
@@ -116,8 +118,8 @@ public class MOEAD_SAS_PLAIN_main extends MOEAD_SAS_main{
 		// find the knee point
 		Solution kneeIndividual = pareto_front.get(PseudoRandom.randInt(0, pareto_front.size() - 1)); 
 		
-		for (int i = 0; i < problem.getNumberOfObjectives(); i++)
-			System.out.print(kneeIndividual.getObjective(i) + "\n");
+		//for (int i = 0; i < problem.getNumberOfObjectives(); i++)
+		//	System.out.print(kneeIndividual.getObjective(i) + "\n");
 		
 		
 		String str = "data/" +problem.getName()

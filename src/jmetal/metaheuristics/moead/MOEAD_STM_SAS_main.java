@@ -54,7 +54,7 @@ import org.femosaa.invalid.SASValidityAndInvalidityCoEvolver;
 import org.femosaa.seed.NewSeeder;
 
 
-public class MOEAD_SAS_main extends SASAlgorithmAdaptor{
+public class MOEAD_STM_SAS_main extends SASAlgorithmAdaptor{
 	public static Logger logger_; // Logger object
 	public static FileHandler fileHandler_; // FileHandler object
 
@@ -280,8 +280,8 @@ public class MOEAD_SAS_main extends SASAlgorithmAdaptor{
 		Solution kneeIndividual = null;
 		if(algorithm instanceof MOEAD_STM_SAS) {
 		     kneeIndividual = ((MOEAD_STM_SAS)algorithm).kneeSelection(pareto_front);
-		} else 	if(algorithm instanceof MOEAD_STM_SAS_STATIC) {
-			 kneeIndividual = ((MOEAD_STM_SAS_STATIC)algorithm).kneeSelection(pareto_front);
+		} else 	if(algorithm instanceof MOEAD) {
+			 kneeIndividual = ((MOEAD)algorithm).kneeSelection(pareto_front);
 		}
 		
 		
@@ -309,8 +309,8 @@ public class MOEAD_SAS_main extends SASAlgorithmAdaptor{
 	protected SolutionSet doRanking(SolutionSet population) {
 		if(algorithm instanceof MOEAD_STM_SAS) {
 			return ((MOEAD_STM_SAS)algorithm).doRanking(population);
-		} else 	if(algorithm instanceof MOEAD_STM_SAS_STATIC) {
-			return ((MOEAD_STM_SAS_STATIC)algorithm).doRanking(population);
+		} else 	if(algorithm instanceof MOEAD) {
+			return ((MOEAD)algorithm).doRanking(population);
 		}
 		
 		return null;
