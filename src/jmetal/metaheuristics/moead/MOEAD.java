@@ -204,6 +204,7 @@ public class MOEAD extends Algorithm {
 				mutation_.execute(children[1]);
 				// evaluation
 				problem_.evaluate(children[0]);
+				problem_.evaluate(children[1]);
 				measurement += factory.record(children[0]);
 				if(EAConfigure.getInstance().measurement == measurement) {
 					break;
@@ -214,7 +215,7 @@ public class MOEAD extends Algorithm {
 					break;
 				}
 				evaluations_++;
-
+				evaluations_++;
 				// STEP 2.3. update the ideal and nadir points
 				updateReference(children[0]);
 				updateNadirPoint(children[0]);
@@ -291,9 +292,7 @@ public class MOEAD extends Algorithm {
 			}
 			
 			
-			if(EAConfigure.getInstance().measurement == measurement) {
-				break;
-			}
+			
 			
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations_%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
 				if(SASAlgorithmAdaptor.isFuzzy) {
@@ -317,6 +316,10 @@ public class MOEAD extends Algorithm {
 							measurement );
 				}
 				
+			}
+			
+			if(EAConfigure.getInstance().measurement == measurement) {
+				break;
 			}
 		
 		} while (evaluations_ <= maxEvaluations|| (evaluations_ >= maxEvaluations && (System.currentTimeMillis() - time) < -1 ));

@@ -261,6 +261,7 @@ public class MOEAD_STM_SAS extends Algorithm {
 				}
 				currentOffspring_.add(children[1]);
 				evaluations_++;
+				evaluations_++;
 				if(((SASSolution)parents[0]).isFromInValid || ((SASSolution)parents[0]).isFromInValid) {
 					((SASSolution)children[0]).isFromInValid = true;
 					((SASSolution)children[1]).isFromInValid = true;

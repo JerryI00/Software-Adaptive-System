@@ -14,7 +14,7 @@ public class EAConfigure {
 	public double crossover_rate;
 	public double mutation_rate;
 	
-	public int measurement = 1500;
+	public int measurement = 700;
 	
 	
 	public EAConfigure(int pop_size, int generation, double crossover_rate,
