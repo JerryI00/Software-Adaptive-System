@@ -21,9 +21,13 @@
 
 package jmetal.metaheuristics.hc;
 
+import java.util.Random;
+
+import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
 import org.femosaa.core.SASSolutionInstantiator;
+import org.femosaa.seed.Seeder;
 
 import jmetal.core.*;
 import jmetal.util.comparators.CrowdingComparator;
@@ -37,193 +41,396 @@ import jmetal.util.*;
 public class HC_SAS extends Algorithm {
 
 	private SASSolutionInstantiator factory = null;
-	
 
+	boolean isNeigboring = true;
+	private Seeder seeder = null;
+	double[] weights = new double[0];
 	// ideal point
 	double[] z_;
 
 	// nadir point
 	double[] nz_;
-	
+
 	int populationSize_;
-	
+
 	SolutionSet population_;
+
 	/**
 	 * Constructor
+	 * 
 	 * @param problem Problem to solve
 	 */
 	public HC_SAS(Problem problem) {
-		super (problem) ;
+		super(problem);
 	} // NSGAII
 
-
-  	/**
-  	 * Constructor
-  	 * @param problem Problem to solve
-  	 */
+	/**
+	 * Constructor
+	 * 
+	 * @param problem Problem to solve
+	 */
 	public HC_SAS(Problem problem, SASSolutionInstantiator factory) {
 		super(problem);
-        this.factory = factory;
+		this.factory = factory;
 	}
 
-	/**   
+	/**
 	 * Runs the NSGA-II algorithm.
+	 * 
 	 * @return a <code>SolutionSet</code> that is a set of non dominated solutions
-	 * as a result of the algorithm execution
-	 * @throws JMException 
+	 *         as a result of the algorithm execution
+	 * @throws JMException
 	 */
 	public SolutionSet execute() throws JMException, ClassNotFoundException {
-		
+
 		if (factory == null) {
 			throw new RuntimeException("No instance of SASSolutionInstantiator found!");
 		}
-		
-		
-		int maxEvaluations  = ((Integer) getInputParameter("maxEvaluations")).intValue();
+
+		if (getInputParameter("seeder") != null) {
+			seeder = (Seeder) getInputParameter("seeder");
+		}
+
+		int maxEvaluations = ((Integer) getInputParameter("maxEvaluations")).intValue();
 		int evaluations;
+		weights = (double[])getInputParameter("weights");
 
-		z_  = new double[problem_.getNumberOfObjectives()];
-	    nz_ = new double[problem_.getNumberOfObjectives()];
 
-		int populationSize = 2;
-		//Initialize the variables
+		z_ = new double[problem_.getNumberOfObjectives()];
+		nz_ = new double[problem_.getNumberOfObjectives()];
+
+		int populationSize = isNeigboring? 1 : 2;
+		// Initialize the variables
 		SolutionSet population = new SolutionSet(populationSize);
-		//SolutionSet nadir_population = new SolutionSet(populationSize);
-		
+		// SolutionSet nadir_population = new SolutionSet(populationSize);
+
 		evaluations = 0;
+		int measurement = 0;
 
-	
-
-		
 		// Create the initial solutionSet
 		Solution newSolution;
-		for (int i = 0; i < 1; i++) {
-			newSolution = factory.getSolution(problem_);
-			problem_.evaluate(newSolution);
-			problem_.evaluateConstraints(newSolution);
-			evaluations++;
-			population.add(newSolution);
-			//nadir_population.add(newSolution);
-		} //for       
+		if (seeder != null) {
+			seeder.seeding(population, factory, problem_, populationSize);
+			evaluations += populationSize;
+			measurement += factory.record(population);
+			fitnessAssignment(population.get(0));
+		} else {
+			// Create the initial solutionSet
+			for (int i = 0; i < populationSize; i++) {
+				newSolution = factory.getSolution(problem_);
+				problem_.evaluate(newSolution);
+				problem_.evaluateConstraints(newSolution);
+				evaluations++;
+				measurement += factory.record(newSolution);
+				population.add(newSolution);
+				fitnessAssignment(newSolution);
+			} // for
+		}
 
 		initIdealPoint();
 		initNadirPoint();
-		
+
 		SolutionSet old_population = new SolutionSet(populationSize);
-		if(SASAlgorithmAdaptor.isFuzzy) {
+		if (SASAlgorithmAdaptor.isFuzzy) {
 			old_population = population;
 			population = factory.fuzzilize(population);
 		}
-		
+
 		for (int i = 0; i < population.size(); i++) {
-			fitnessAssignment(population.get(i));	// assign fitness value to each solution			
+			fitnessAssignment(population.get(i)); // assign fitness value to each solution
 		}
-		
+
 		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0) {
 			org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
 					"SolutionSetWithGen.rtf", 0);
-		} 
-		
-		int index = 0;
+		}
+
+		int index = new Random().nextInt(population.get(0).numberOfVariables());
 		double te = 0.0;
-		// Generations 
+		Solution startingPoint = population.get(0);
+		// Generations
 		while (evaluations < maxEvaluations) {
 
-		
-	
-	
-
 			/**
-			 * This is a hill climbing search, where the neighbour means the next adjacent variable.
+			 * This is a hill climbing search, where the neighbour means the solution with only one gene change
+			 * This is also a random restart hill climbing
 			 */
-	
+			
+			if (EAConfigure.getInstance().measurement == measurement) {
+				break;
+			}
 
-			Solution nextSolution = factory.getSolution(population.get(0));
-			
-			((SASSolution) nextSolution).mutateWithDependency(index,  true);
-			index++;
-			if(index >= nextSolution.getDecisionVariables().length) {
-				index = 0;
-			}
-			
-			
-		
-			
-			problem_.evaluate(nextSolution);
-			problem_.evaluateConstraints(nextSolution);
-			
-			updateReference(nextSolution);
-			updateNadirPoint(nextSolution);
-		
-			if(SASAlgorithmAdaptor.isLogToD && nextSolution.getObjective(0) <= SASAlgorithmAdaptor.d && te == 0.0) {
-				System.out.print("Found one with " + evaluations + "\n");
-				te = evaluations; 
-			}
-			
-			old_population.add(nextSolution);
-			if(SASAlgorithmAdaptor.isFuzzy) {
-				population = factory.fuzzilize(old_population);
-			}
-			
-			fitnessAssignment(population.get(0));
-			fitnessAssignment(population.get(1));
-			
-			
-			if(population.get(0).getFitness() < population.get(1).getFitness() ) {
-				population.remove(1);
-				old_population.remove(1);
+			//double f = Double.MAX_VALUE;
+			Solution bestS = null;
+			// Only work for single objective
+			if (isNeigboring) {
 				
-			} else {
-				population.remove(0);
-				old_population.remove(0);
-			}
+				for (int i = 0; i < startingPoint.getDecisionVariables().length; i++) {
+					
+					// Get the neibghour
+					int[] bounds = ((SASSolution) startingPoint).getBounds(i);
+					int new_v = (int) (PseudoRandom.randInt(
+							// In the implementation of SASSolution, we can ensure the right boundary is 
+							// always used even under variable dependency.
+							bounds[0],
+							bounds[1]));
+					
+					if (new_v == startingPoint.getDecisionVariables()[i].getValue()) {
+						if(new_v + 1 > bounds[1]) {
+							new_v = bounds[0];
+						} else {
+							new_v += 1;
+						}
+					}
+					
+					
+					
+					Solution nextSolution = factory.getSolution(startingPoint);
+					nextSolution.getDecisionVariables()[i].setValue(new_v);
+
+					problem_.evaluate(nextSolution);
+					problem_.evaluateConstraints(nextSolution);
+					
+					updateReference(nextSolution);
+					updateNadirPoint(nextSolution);
+
+					fitnessAssignment(nextSolution);
+					fitnessAssignment(population.get(0));
+					if(bestS != null) {
+					   fitnessAssignment(bestS);
+					}
+					if (bestS == null || bestS.getFitness() > nextSolution.getFitness()) {
+						bestS = nextSolution;
+					}
+
+					evaluations++;
+					measurement += factory.record(nextSolution);
+					if (EAConfigure.getInstance().measurement == measurement) {
+						break;
+					}
+
+					if (evaluations >= maxEvaluations) {
+						break;
+					}
+				}
+				
+				if (population.get(0).getFitness() > bestS.getFitness()) {
+					population.clear();
+					population.add(bestS);
+					startingPoint = bestS;
+					System.out.print("has better one\n");
+				} else {
+					
+					if (EAConfigure.getInstance().measurement == measurement) {
+						break;
+					}
+
+					if (evaluations >= maxEvaluations) {
+						break;
+					}
+					
+					newSolution = factory.getSolution(problem_);
+					problem_.evaluate(newSolution);
+					problem_.evaluateConstraints(newSolution);
+					evaluations++;
+					measurement += factory.record(newSolution);
+					startingPoint = newSolution;
+					fitnessAssignment(newSolution);
+					
+					
+				}
+				
+
+				//%%%%%%%%%%% older neigboring
+				
+				/*int next_index = index >= population.get(0).getDecisionVariables().length - 1 ? 0 : index + 1;
+				int pre_index = index == 0 ? population.get(0).getDecisionVariables().length - 1 : index - 1;
+
+				int[] bounds = ((SASSolution) population.get(0)).getBounds(next_index);
+				for (int i = bounds[0]; i <= bounds[1]; i++) {
+					Solution nextSolution = factory.getSolution(population.get(0));
+					nextSolution.getDecisionVariables()[next_index].setValue(i);
+
+					problem_.evaluate(nextSolution);
+					problem_.evaluateConstraints(nextSolution);
+					
+					updateReference(nextSolution);
+					updateNadirPoint(nextSolution);
+
+					fitnessAssignment(nextSolution);
+
+					if (f > nextSolution.getFitness()) {
+						f = nextSolution.getFitness();
+						bestS = nextSolution;
+						index = next_index;
+					}
+
+					evaluations++;
+					measurement += factory.record(nextSolution);
+					if (EAConfigure.getInstance().measurement == measurement) {
+						break;
+					}
+
+					if (evaluations >= maxEvaluations) {
+						break;
+					}
+				}
+
+				if (EAConfigure.getInstance().measurement > measurement && evaluations < maxEvaluations) {
+					bounds = ((SASSolution) population.get(0)).getBounds(pre_index);
+					for (int i = bounds[0]; i <= bounds[1]; i++) {
+						Solution nextSolution = factory.getSolution(population.get(0));
+						nextSolution.getDecisionVariables()[pre_index].setValue(i);
+
+						problem_.evaluate(nextSolution);
+						problem_.evaluateConstraints(nextSolution);
+						
+						updateReference(nextSolution);
+						updateNadirPoint(nextSolution);
+
+						fitnessAssignment(nextSolution);
+
+						if (f > nextSolution.getFitness()) {
+							f = nextSolution.getFitness();
+							bestS = nextSolution;
+							index = pre_index;
+						}
+
+						evaluations++;
+						measurement += factory.record(nextSolution);
+						if (EAConfigure.getInstance().measurement == measurement) {
+							break;
+						}
+
+						if (evaluations >= maxEvaluations) {
+							break;
+						}
+					}
+				}
+
+				if (population.get(0).getFitness() > f) {
+					population.clear();
+					population.add(bestS);
+					System.out.print("has better one\n");
+				} else {
+					index = new Random().nextInt(population.get(0).numberOfVariables());
+					//index = index >= population.get(0).getDecisionVariables().length - 1 ? 0 : index + 1;
+				}*/
+				
+				System.out.print("Measurement: " + measurement + "\n");
+				
+				if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
+					if(SASAlgorithmAdaptor.isFuzzy) {
+						org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithMeasurement.rtf", 
+								measurement );
+					} else {
+						org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithMeasurement.rtf", 
+								measurement );
+					}
+					
+				}
 			
-			evaluations++;
-			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
-				org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population, "SolutionSetWithGen.rtf", 
-						evaluations );
+			} else {
+
+				Solution nextSolution = factory.getSolution(population.get(0));
+
+				((SASSolution) nextSolution).mutateWithDependency(index, true);
+				index++;
+				if (index >= nextSolution.getDecisionVariables().length) {
+					index = 0;
+				}
+
+				problem_.evaluate(nextSolution);
+				problem_.evaluateConstraints(nextSolution);
+
+				updateReference(nextSolution);
+				updateNadirPoint(nextSolution);
+
+				if (SASAlgorithmAdaptor.isLogToD && nextSolution.getObjective(0) <= SASAlgorithmAdaptor.d
+						&& te == 0.0) {
+					System.out.print("Found one with " + evaluations + "\n");
+					te = evaluations;
+				}
+
+				old_population.add(nextSolution);
+				if (SASAlgorithmAdaptor.isFuzzy) {
+					population = factory.fuzzilize(old_population);
+				}
+
+				fitnessAssignment(population.get(0));
+				fitnessAssignment(population.get(1));
+
+				if (population.get(0).getFitness() < population.get(1).getFitness()) {
+					population.remove(1);
+					old_population.remove(1);
+
+				} else {
+					population.remove(0);
+					old_population.remove(0);
+				}
+
+				evaluations++;
+				if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0
+						&& evaluations % SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
+					org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
+							"SolutionSetWithGen.rtf", evaluations);
+				}
+
 			}
 
-		
 		} // while
 
-		if(SASAlgorithmAdaptor.isFuzzy) {
+		if (SASAlgorithmAdaptor.isFuzzy) {
 			population = old_population;
 		}
 		// Return as output parameter the required evaluations
-		//setOutputParameter("evaluations", requiredEvaluations);
-		if(SASAlgorithmAdaptor.isLogToD) {
-		   System.out.print("Minimum evaluation " + te + "\n");
-		   org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
+		// setOutputParameter("evaluations", requiredEvaluations);
+		if (SASAlgorithmAdaptor.isLogToD) {
+			System.out.print("Minimum evaluation " + te + "\n");
+			org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
 		}
 		
+		
+
 		return population;
 	} // execute
-	
-	public SolutionSet doRanking(SolutionSet population){
+
+	public SolutionSet doRanking(SolutionSet population) {
 		SolutionSet set = new SolutionSet(1);
 		set.add(population.get(0));
-		
+
 		return set;
 	}
-	
-	
+
 	/**
-	 * This is used to assign fitness value to a solution, according to weighted sum strategy.
+	 * This is used to assign fitness value to a solution, according to weighted sum
+	 * strategy.
+	 * 
 	 * @param cur_solution
 	 */
 	public void fitnessAssignment(Solution cur_solution) {
 		double cur_fitness = 0.0;
-		double weight	   = 1.0 / (double) problem_.getNumberOfObjectives();
+		//double weight	   = 1.0 / (double) problem_.getNumberOfObjectives();
+		
 
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-			if(cur_solution.getObjective(i) == Double.MAX_VALUE/100) {
-				cur_fitness += weight * 1.0;
+			
+			if(SASAlgorithmAdaptor.isWeightedSumNormalized) {
+				if(cur_solution.getObjective(i) == Double.MAX_VALUE/100) {
+					cur_fitness += weights[i] * 1.0;
+					//System.out.print(cur_fitness + " Find one fitness with MAX_VALUE!\n");
+				} else {
+				
+				cur_fitness += weights[i] * (nz_[i] != z_[i]? ((cur_solution.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) : 
+					((cur_solution.getObjective(i) - z_[i]) / (nz_[i])));
+			 }
 			} else {
-			cur_fitness += weight * (nz_[i] != z_[i]? ((cur_solution.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) : 
-				((cur_solution.getObjective(i) - z_[i]) / (nz_[i]))); 
-		   }
+				cur_fitness += weights[i] * cur_solution.getObjective(i);
+			}
+			
+			
 		}
+		
 		if(Double.isNaN(cur_fitness)) {
 			System.out.print("Find one fitness with NaN!\n");
 			cur_fitness = 0;//-1.0e+30;
@@ -232,19 +439,20 @@ public class HC_SAS extends Algorithm {
 	}
 	
 
-  	/**
-  	 * Initialize the ideal point
+	/**
+	 * Initialize the ideal point
+	 * 
 	 * @throws JMException
 	 * @throws ClassNotFoundException
 	 */
 	void initIdealPoint() throws JMException, ClassNotFoundException {
-		if(SASAlgorithmAdaptor.isFuzzy) {
+		if (SASAlgorithmAdaptor.isFuzzy) {
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 				z_[i] = 0;
 			}
 			return;
 		}
-		
+
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
 			z_[i] = 1.0e+30;
 
@@ -254,30 +462,33 @@ public class HC_SAS extends Algorithm {
 
 	/**
 	 * Initialize the nadir point
+	 * 
 	 * @throws JMException
 	 * @throws ClassNotFoundException
 	 */
 	void initNadirPoint() throws JMException, ClassNotFoundException {
-		if(SASAlgorithmAdaptor.isFuzzy) {
+		if (SASAlgorithmAdaptor.isFuzzy) {
 			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 				nz_[i] = 1;
 			}
 			return;
 		}
-		
+
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
 			nz_[i] = -1.0e+30;
 
 		for (int i = 0; i < populationSize_; i++)
 			updateNadirPoint(population_.get(i));
 	}
-	
-   	/**
-   	 * Update the ideal point, it is just an approximation with the best value for each objective
-   	 * @param individual
-   	 */
+
+	/**
+	 * Update the ideal point, it is just an approximation with the best value for
+	 * each objective
+	 * 
+	 * @param individual
+	 */
 	void updateReference(Solution individual) {
-		if(SASAlgorithmAdaptor.isFuzzy) {
+		if (SASAlgorithmAdaptor.isFuzzy) {
 			return;
 		}
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
@@ -285,14 +496,15 @@ public class HC_SAS extends Algorithm {
 				z_[i] = individual.getObjective(i);
 		}
 	}
-  
-  	/**
-  	 * Update the nadir point, it is just an approximation with worst value for each objective
-  	 * 
-  	 * @param individual
-  	 */
+
+	/**
+	 * Update the nadir point, it is just an approximation with worst value for each
+	 * objective
+	 * 
+	 * @param individual
+	 */
 	void updateNadirPoint(Solution individual) {
-		if(SASAlgorithmAdaptor.isFuzzy) {
+		if (SASAlgorithmAdaptor.isFuzzy) {
 			return;
 		}
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
@@ -300,7 +512,7 @@ public class HC_SAS extends Algorithm {
 				nz_[i] = individual.getObjective(i);
 		}
 	}
-	
+
 	/**
 	 * This is used to find the knee point from a set of solutions
 	 * 

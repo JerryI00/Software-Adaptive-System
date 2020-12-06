@@ -253,6 +253,10 @@ public abstract class SASSolution extends Solution {
 	
 	}
 	
+	public int[] getBounds(int i)  throws JMException{
+		return new int[] {this.getLowerBoundforVariable(i),this.getUpperBoundforVariable(i)};
+	}
+	
 	public void crossoverWithDependency(Solution parent1, Solution parent2, Solution offSpring1, Solution offSpring2) throws JMException{
 		for (int i = 0; i < parent1.numberOfVariables(); i++) {
 			// Crossover has been completed

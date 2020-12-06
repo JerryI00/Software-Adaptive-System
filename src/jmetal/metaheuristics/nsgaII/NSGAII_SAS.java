@@ -280,6 +280,22 @@ public class NSGAII_SAS extends Algorithm {
 			
 			// Ranking the union
 			Ranking ranking = new Ranking(union);
+			
+			if (SASAlgorithmAdaptor.logNumberOfNoDominated) {
+				/*if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logNumberOfNoDominated(old_population, "NondominatedCount.rtf", 
+							evaluations );
+				} else {
+					org.femosaa.util.Logger.logNumberOfNoDominated(population, "NondominatedCount.rtf", 
+							evaluations );
+				}*/
+				org.femosaa.util.Logger.logNumberOfNoDominated(ranking.getSubfront(0), "NondominatedCount.rtf", 
+						evaluations );
+				if(EAConfigure.getInstance().measurement == measurement) {
+					org.femosaa.util.Logger.logNumberOfNoDominated(ranking.getSubfront(0), "FinalNondominatedCount.rtf", 
+							evaluations );
+				}
+			}
 
 			int remain = populationSize;
 			int index = 0;
@@ -393,7 +409,6 @@ public class NSGAII_SAS extends Algorithm {
 //			}
 //		}
 //		System.out.print("("+evaluations+","+(no/population.size()) + ")\n");
-		
 		
 		
 		if(SASAlgorithmAdaptor.isFuzzy) {

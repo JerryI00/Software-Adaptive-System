@@ -21,6 +21,7 @@
 
 package jmetal.metaheuristics.sga;
 
+import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
 import org.femosaa.core.SASSolutionInstantiator;
@@ -86,6 +87,7 @@ public class SGA_SAS extends Algorithm {
 		int populationSize;
 		int maxEvaluations;
 		int evaluations;
+		int measurement;
 
 		int requiredEvaluations; // Use in the example of use of the
 		// indicators object (see below)
@@ -116,6 +118,7 @@ public class SGA_SAS extends Algorithm {
 		populationSize_ = populationSize;
 		population_ = population;
 		evaluations = 0;
+		measurement = 0;
 
 		requiredEvaluations = 0;
 
@@ -134,12 +137,14 @@ public class SGA_SAS extends Algorithm {
 		if (seeder != null) {
 			seeder.seeding(population, factory, problem_, populationSize);
 			evaluations += populationSize;
+			measurement += factory.record(population);
 		} else {
 			for (int i = 0; i < populationSize; i++) {
 				newSolution = factory.getSolution(problem_);
 				problem_.evaluate(newSolution);
 				problem_.evaluateConstraints(newSolution);
 				evaluations++;
+				measurement += factory.record(newSolution);
 				population.add(newSolution);
 			} //for   
 		}
@@ -171,6 +176,12 @@ public class SGA_SAS extends Algorithm {
 		// Generations 
 		while (evaluations < maxEvaluations || (evaluations >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time )) {
 
+			
+			if(EAConfigure.getInstance().measurement == measurement) {
+				break;
+			}
+			
+			
 			// Create the offSpring solutionSet
 			offspringPopulation = new SolutionSet(populationSize);
 			Solution[] parents = new Solution[2];
@@ -185,8 +196,16 @@ public class SGA_SAS extends Algorithm {
 					mutationOperator.execute(offSpring[1]);
 					problem_.evaluate(offSpring[0]);
 					problem_.evaluateConstraints(offSpring[0]);
+					measurement += factory.record(offSpring[0]);
+					if(EAConfigure.getInstance().measurement == measurement) {
+						break;
+					}
 					problem_.evaluate(offSpring[1]);
 					problem_.evaluateConstraints(offSpring[1]);
+					measurement += factory.record(offSpring[1]);
+					if(EAConfigure.getInstance().measurement == measurement) {
+						break;
+					}
 					
 					if(SASAlgorithmAdaptor.isLogToD && (offSpring[0].getObjective(0) <= SASAlgorithmAdaptor.d || 
 							offSpring[1].getObjective(0) <= SASAlgorithmAdaptor.d) && te == 0.0) {
@@ -251,6 +270,16 @@ public class SGA_SAS extends Algorithm {
 			}
 			
 			
+			if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
+				if(SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithMeasurement.rtf", 
+							measurement );
+				} else {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithMeasurement.rtf", 
+							measurement );
+				}
+				
+			}
 
 		} // while
 
@@ -309,14 +338,18 @@ public class SGA_SAS extends Algorithm {
 
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 			
-			if(cur_solution.getObjective(i) == Double.MAX_VALUE/100) {
-				cur_fitness += weights[i] * 1.0;
-				//System.out.print(cur_fitness + " Find one fitness with MAX_VALUE!\n");
+			if(SASAlgorithmAdaptor.isWeightedSumNormalized) {
+				if(cur_solution.getObjective(i) == Double.MAX_VALUE/100) {
+					cur_fitness += weights[i] * 1.0;
+					//System.out.print(cur_fitness + " Find one fitness with MAX_VALUE!\n");
+				} else {
+				
+				cur_fitness += weights[i] * (nz_[i] != z_[i]? ((cur_solution.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) : 
+					((cur_solution.getObjective(i) - z_[i]) / (nz_[i])));
+			 }
 			} else {
-			
-			cur_fitness += weights[i] * (nz_[i] != z_[i]? ((cur_solution.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) : 
-				((cur_solution.getObjective(i) - z_[i]) / (nz_[i])));
-		 }
+				cur_fitness += weights[i] * cur_solution.getObjective(i);
+			}
 		}
 		
 		if(Double.isNaN(cur_fitness)) {

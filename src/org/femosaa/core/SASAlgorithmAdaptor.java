@@ -31,12 +31,13 @@ public abstract class SASAlgorithmAdaptor {
 	public static int logGenerationOfObjectiveValue = -1;//500;//5000; // <=0 means disabled.
 	// This is to control if fuzzy requirement is enable
 	public static boolean isFuzzy = false; 
+	public static boolean isWeightedSumNormalized = true; 
 	// This is to control if all solutions that have ever been found needs to be recalled
 	public static boolean isLogDiscardedSolutions = false; 
 	
 	public static boolean logMeasurementOfObjectiveValue = true;
 	
-	
+	public static boolean logNumberOfNoDominated = false;
 
 	// For SGA, this means the total time
 	public static long seed_time = -1;//test only for seeding, -1 means disabled

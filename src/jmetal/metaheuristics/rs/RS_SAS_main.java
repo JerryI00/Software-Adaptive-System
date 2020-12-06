@@ -52,6 +52,7 @@ import org.femosaa.core.SAS;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASProblemFactory;
 import org.femosaa.core.SASSolutionInstantiator;
+import org.femosaa.seed.FixedSeeder;
 
 public class RS_SAS_main extends SASAlgorithmAdaptor{
 	public static Logger logger_; // Logger object
@@ -187,7 +188,7 @@ public class RS_SAS_main extends SASAlgorithmAdaptor{
 		int factor = 10;
 		algorithm.setInputParameter("populationSize", EAConfigure.getInstance().pop_size);
 		algorithm.setInputParameter("maxEvaluations", EAConfigure.getInstance().pop_size * EAConfigure.getInstance().generation);
-		
+		algorithm.setInputParameter("weights", factory.getWeights());
 		// Crossover operator
 		parameters = new HashMap();
 		parameters.put("probability", EAConfigure.getInstance().crossover_rate);
@@ -195,6 +196,13 @@ public class RS_SAS_main extends SASAlgorithmAdaptor{
 		// This needs to change in testing.
 		parameters.put("jmetal.metaheuristics.moead.SASSolutionInstantiator", factory);
 		crossover = CrossoverFactory.getCrossoverOperator("TwoPointsCrossover", parameters);
+		
+
+		if(SASAlgorithmAdaptor.isSeedSolution) {
+			//algorithm.setInputParameter("seeder", new Seeder(mutation));	
+			//algorithm.setInputParameter("seeder", NewSeeder.getInstance(mutation));
+			algorithm.setInputParameter("seeder", FixedSeeder.getInstance());	
+		}
 
 		// Mutation operator
 		parameters = new HashMap();
