@@ -14,7 +14,7 @@ public class EAConfigure {
 	public double crossover_rate;
 	public double mutation_rate;
 	
-	public int measurement = 1000; //-1
+	public int measurement = -1;//1000; //-1
 	
 	
 	public EAConfigure(int pop_size, int generation, double crossover_rate,
@@ -41,15 +41,15 @@ public class EAConfigure {
 	}
 	
 	public void setupWSConfiguration(){
-		con = new EAConfigure(100, 100, 0.9,  0.1);
+		//con = new EAConfigure(100, 100, 0.9,  0.1);
 		//con = new EAConfigure(100, 300, 0.9,  0.1);
 		//seeding 100 AS - 
-		//con = new EAConfigure(100, 500, 0.8, 0.02);
+		con = new EAConfigure(100, 500, 0.8, 0.02);
 	}
 	
 	public void setupFLASHConfiguration(){
 		//con = new EAConfigure(100, 500, 0.9,  0.1);
-		con = new EAConfigure(50, 500, 0.9,  0.1);
+		con = new EAConfigure(20, 25, 0.9,  0.1);
 	}
 	
 	public void setupNRPConfiguration(){
@@ -66,5 +66,14 @@ public class EAConfigure {
 		con = new EAConfigure(100, 300, 0.0, 0.02);
 	}
 	
+	public void setupNRPConfigurationOnRun(int gen){
+		con = new EAConfigure(100, gen, 0.8,  0.01);//0.1
+		//con = new EAConfigure(100, 200, 0.8,  0.01);//0.1
+	}
+	
+	public void setupWSConfigurationOnRun(int gen){
+		con = new EAConfigure(100, gen, 0.8,  0.02);//0.1
+		//con = new EAConfigure(100, 200, 0.8,  0.01);//0.1
+	}
 
 }

@@ -189,6 +189,9 @@ public class SGA_SAS_main extends SASAlgorithmAdaptor{
 		algorithm.setInputParameter("populationSize", EAConfigure.getInstance().pop_size);
 		algorithm.setInputParameter("maxEvaluations", EAConfigure.getInstance().pop_size * EAConfigure.getInstance().generation);
 		algorithm.setInputParameter("weights", factory.getWeights());
+		if(factory.getFixedBounds() != null) {
+			algorithm.setInputParameter("fixed_bounds", factory.getFixedBounds());
+		}
 	
 		// Crossover operator
 		parameters = new HashMap();

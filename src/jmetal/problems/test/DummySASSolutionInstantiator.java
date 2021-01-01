@@ -99,4 +99,10 @@ public class DummySASSolutionInstantiator implements SASSolutionInstantiator {
 		return 0;
 	}
 
+	@Override
+	public double[][] getFixedBounds() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

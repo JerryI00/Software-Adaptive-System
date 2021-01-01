@@ -39,6 +39,8 @@ public interface SASSolutionInstantiator {
 	
 	public double[] getWeights();
 	
+	public double[][] getFixedBounds();
+	
 	public int record(SolutionSet set);
 	
 	public int record(Solution s);

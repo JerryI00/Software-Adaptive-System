@@ -19,7 +19,7 @@
 //  You should have received a copy of the GNU Lesser General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package jmetal.metaheuristics.rs;
+package jmetal.metaheuristics.sa;
 
 import java.util.Random;
 
@@ -35,91 +35,99 @@ import jmetal.util.*;
 
 /**
  * 
- * @author keli, taochen
+ * 
  *
  */
-public class RS_SAS extends Algorithm {
+public class SA_SAS extends Algorithm {
 
 	private SASSolutionInstantiator factory = null;
-	
 
+	boolean isNeigboring = true;
+	private Seeder seeder = null;
+	double[] weights = new double[0];
+	
+	// This to be used with single objective only and without any fuzzy setting
+	double[][] fixed_bounds = null;
 	// ideal point
 	double[] z_;
 
 	// nadir point
 	double[] nz_;
-	
+
 	int populationSize_;
-	private Seeder seeder = null;
+
 	SolutionSet population_;
-	double[] weights = new double[0];
-	// This to be used with single objective only and without any fuzzy setting
-	double[][] fixed_bounds = null;
+	
+	protected double t0 = 10.0;
+
+	protected double tn = 1.0;
+
+
 	/**
 	 * Constructor
+	 * 
 	 * @param problem Problem to solve
 	 */
-	public RS_SAS(Problem problem) {
-		super (problem) ;
+	public SA_SAS(Problem problem) {
+		super(problem);
 	} // NSGAII
 
-
-  	/**
-  	 * Constructor
-  	 * @param problem Problem to solve
-  	 */
-	public RS_SAS(Problem problem, SASSolutionInstantiator factory) {
+	/**
+	 * Constructor
+	 * 
+	 * @param problem Problem to solve
+	 */
+	public SA_SAS(Problem problem, SASSolutionInstantiator factory) {
 		super(problem);
-        this.factory = factory;
+		this.factory = factory;
 	}
 
-	/**   
+	/**
 	 * Runs the NSGA-II algorithm.
+	 * 
 	 * @return a <code>SolutionSet</code> that is a set of non dominated solutions
-	 * as a result of the algorithm execution
-	 * @throws JMException 
+	 *         as a result of the algorithm execution
+	 * @throws JMException
 	 */
 	public SolutionSet execute() throws JMException, ClassNotFoundException {
-		
+
 		if (factory == null) {
 			throw new RuntimeException("No instance of SASSolutionInstantiator found!");
 		}
-		
+
 		if (getInputParameter("seeder") != null) {
 			seeder = (Seeder) getInputParameter("seeder");
 		}
 		if(getInputParameter("fixed_bounds") != null) {
 			fixed_bounds = (double[][])getInputParameter("fixed_bounds");
 		}
-		
-		int maxEvaluations  = ((Integer) getInputParameter("maxEvaluations")).intValue();
+
+		int maxEvaluations = ((Integer) getInputParameter("maxEvaluations")).intValue();
 		int evaluations;
 		weights = (double[])getInputParameter("weights");
 
 
-		z_  = new double[problem_.getNumberOfObjectives()];
-	    nz_ = new double[problem_.getNumberOfObjectives()];
+		z_ = new double[problem_.getNumberOfObjectives()];
+		nz_ = new double[problem_.getNumberOfObjectives()];
 
-		int populationSize = 2;
-		//Initialize the variables
+		int populationSize = isNeigboring? 1 : 2;
+		// Initialize the variables
 		SolutionSet population = new SolutionSet(populationSize);
-		//SolutionSet nadir_population = new SolutionSet(populationSize);
-		
+		// SolutionSet nadir_population = new SolutionSet(populationSize);
+
 		evaluations = 0;
 		int measurement = 0;
-	
 
-		
 		// Create the initial solutionSet
 		Solution newSolution;
 		if (seeder != null) {
-			seeder.seeding(population, factory, problem_, 1);
-			evaluations += 1;
+			seeder.seeding(population, factory, problem_, populationSize);
+			evaluations += populationSize;
 			measurement += factory.record(population);
 			fitnessAssignment(population.get(0));
 		} else {
 			// Create the initial solutionSet
-			for (int i = 0; i < 1; i++) {
+			for (int i = 0; i < populationSize; i++) {
 				newSolution = factory.getSolution(problem_);
 				problem_.evaluate(newSolution);
 				problem_.evaluateConstraints(newSolution);
@@ -128,21 +136,21 @@ public class RS_SAS extends Algorithm {
 				population.add(newSolution);
 				fitnessAssignment(newSolution);
 			} // for
-		}     
+		}
 
 		initIdealPoint();
 		initNadirPoint();
-		
+
 		SolutionSet old_population = new SolutionSet(populationSize);
-		if(SASAlgorithmAdaptor.isFuzzy) {
+		if (SASAlgorithmAdaptor.isFuzzy) {
 			old_population = population;
 			population = factory.fuzzilize(population);
 		}
-		
+
 		for (int i = 0; i < population.size(); i++) {
-			fitnessAssignment(population.get(i));	// assign fitness value to each solution			
+			fitnessAssignment(population.get(i)); // assign fitness value to each solution
 		}
-		
+
 		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0) {
 			if(SASAlgorithmAdaptor.isFuzzy) {
 				org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
@@ -151,82 +159,94 @@ public class RS_SAS extends Algorithm {
 				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
 						0);
 			}
-		} 
-		
-		Random rand = new Random();
+		}
+
+		int index = new Random().nextInt(population.get(0).numberOfVariables());
 		double te = 0.0;
-		
-		// Generations 
+		Solution startingPoint = population.get(0);
+		// Generations
+		Solution bestS = null;
 		while (evaluations < maxEvaluations) {
 
-		
-	
-	
-			
-	
 			/**
-			 * This is a random search, uniformly searching over the variable vector.
+			 * This is a simulated annealing search, where the neighbour means the solution with
+			 * only one gene change 
+			 * This is an implementation taken from from opt4j
 			 */
 
-			Solution nextSolution = factory.getSolution(population.get(0));
-			
-			//int index = rand.nextInt(nextSolution.getDecisionVariables().length);
-			for (int i = 0; i < nextSolution.getDecisionVariables().length; i++) {
-				((SASSolution) nextSolution).mutateWithDependency(i,  true);
+			if (EAConfigure.getInstance().measurement == measurement) {
+				break;
 			}
+
+			boolean isMove = false;
 			
-			
-			
-			
-		
-			
+			// Only work for single objective, 
+
+			int i = PseudoRandom.randInt(0, startingPoint.getDecisionVariables().length - 1);
+
+			// Get the neibghour
+			int[] bounds = ((SASSolution) startingPoint).getBounds(i);
+			int new_v = (int) (PseudoRandom.randInt(
+					// In the implementation of SASSolution, we can ensure the right boundary is
+					// always used even under variable dependency.
+					bounds[0], bounds[1]));
+
+			if (new_v == startingPoint.getDecisionVariables()[i].getValue()) {
+				if (new_v + 1 > bounds[1]) {
+					new_v = bounds[0];
+				} else {
+					new_v += 1;
+				}
+			}
+
+			Solution nextSolution = factory.getSolution(startingPoint);
+			nextSolution.getDecisionVariables()[i].setValue(new_v);
+
 			problem_.evaluate(nextSolution);
 			problem_.evaluateConstraints(nextSolution);
-			
-			if(SASAlgorithmAdaptor.isLogToD && nextSolution.getObjective(0) <= SASAlgorithmAdaptor.d && te == 0.0) {
-				System.out.print("Found one with " + evaluations + "\n");
-				te = evaluations; 
-			}
-			
-			
+
 			updateReference(nextSolution);
 			updateNadirPoint(nextSolution);
-		
-			
-			
-			if(SASAlgorithmAdaptor.isFuzzy) {
-				old_population.add(nextSolution);
-				population = factory.fuzzilize(old_population);
-			} else {
-				population.add(nextSolution);
-			}
-			
+
+			fitnessAssignment(nextSolution);
 			fitnessAssignment(population.get(0));
-			fitnessAssignment(population.get(1));
-			
-			
-			
-			
-			if(population.get(0).getFitness() < population.get(1).getFitness() ) {
-				Solution s = population.get(0);
-				population.clear();
-				population.add(s);
-				if(SASAlgorithmAdaptor.isFuzzy) {
-				old_population.remove(1);
+			if (bestS != null) {
+				fitnessAssignment(bestS);
+			}
+			if (bestS == null || bestS.getFitness() > nextSolution.getFitness()) {
+				if(bestS != null) {
+					isMove = true;
 				}
-				
+				bestS = nextSolution;
 			} else {
-				Solution s = population.get(1);
-				population.clear();
-				population.add(s);
-				if(SASAlgorithmAdaptor.isFuzzy) {
-				old_population.remove(0);
+				double a = (bestS.getFitness() - nextSolution.getFitness()) / getTemperature(evaluations, maxEvaluations);
+				double e = Math.exp(a);
+				if (PseudoRandom.randDouble() < e) {
+					isMove = true;
 				}
 			}
-			
+
 			evaluations++;
 			measurement += factory.record(nextSolution);
-			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
+			if (EAConfigure.getInstance().measurement == measurement) {
+				break;
+			}
+
+			if (evaluations >= maxEvaluations) {
+				break;
+			}
+			// ******
+
+			if (isMove) {
+				population.clear();
+				population.add(bestS);
+				startingPoint = bestS;
+				System.out.print("has better one\n");
+			} 
+
+			
+			
+			if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
 				if(SASAlgorithmAdaptor.isFuzzy) {
 					org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
 							"SolutionSetWithGen.rtf", evaluations);
@@ -236,53 +256,57 @@ public class RS_SAS extends Algorithm {
 				}
 			}
 			
+			System.out.print("Measurement: " + measurement + "\n");
+
 			if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
-				if(SASAlgorithmAdaptor.isFuzzy) {
-					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithMeasurement.rtf", 
-							measurement );
+				if (SASAlgorithmAdaptor.isFuzzy) {
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population,
+							"SolutionSetWithMeasurement.rtf", measurement);
 				} else {
-					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithMeasurement.rtf", 
-							measurement );
+					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithMeasurement.rtf",
+							measurement);
 				}
-				
+
 			}
 
-			//System.out.print("Measurement: " + measurement + "\n");
-			//System.out.print("Eval: " + evaluations + "\n");
-			
-			
-			if (EAConfigure.getInstance().measurement == measurement) {
-				break;
-			}
-		
 		} // while
+		
+		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
+						"SolutionSetWithGen.rtf", evaluations);
+			} else {
+				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+						evaluations);
+			}
+		}
 
-		if(SASAlgorithmAdaptor.isFuzzy) {
+		if (SASAlgorithmAdaptor.isFuzzy) {
 			population = old_population;
 		}
 		// Return as output parameter the required evaluations
-		//setOutputParameter("evaluations", requiredEvaluations);
-		
-		if(SASAlgorithmAdaptor.isLogToD) {
-			   System.out.print("Minimum evaluation " + te + "\n");
-			   org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
+		// setOutputParameter("evaluations", requiredEvaluations);
+		if (SASAlgorithmAdaptor.isLogToD) {
+			System.out.print("Minimum evaluation " + te + "\n");
+			org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
 		}
-			
-		System.out.print("Measurement: " + measurement + "\n");
 		
+		
+
 		return population;
 	} // execute
-	
-	public SolutionSet doRanking(SolutionSet population){
+
+	public SolutionSet doRanking(SolutionSet population) {
 		SolutionSet set = new SolutionSet(1);
 		set.add(population.get(0));
-		
+
 		return set;
 	}
-	
-	
+
 	/**
-	 * This is used to assign fitness value to a solution, according to weighted sum strategy.
+	 * This is used to assign fitness value to a solution, according to weighted sum
+	 * strategy.
+	 * 
 	 * @param cur_solution
 	 */
 	public void fitnessAssignment(Solution cur_solution) {
@@ -304,6 +328,8 @@ public class RS_SAS extends Algorithm {
 			} else {
 				cur_fitness += weights[i] * cur_solution.getObjective(i);
 			}
+			
+			
 		}
 		
 		if(Double.isNaN(cur_fitness)) {
@@ -312,7 +338,7 @@ public class RS_SAS extends Algorithm {
 		}
 		cur_solution.setFitness(cur_fitness);
 	}
-
+	
 
 	/**
 	 * Initialize the ideal point
@@ -412,6 +438,13 @@ public class RS_SAS extends Algorithm {
 		}
 	}
 	
+	
+	//CoolingScheduleHyperbolic from opt4j
+	double getTemperature(int i, int n) {
+		return t0 * Math.pow((tn / t0), (double) i / (double) n);
+	}
+
+
 	/**
 	 * This is used to find the knee point from a set of solutions
 	 * 

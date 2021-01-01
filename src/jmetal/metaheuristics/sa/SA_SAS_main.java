@@ -22,7 +22,7 @@
  *  
  */
 
-package jmetal.metaheuristics.hc;
+package jmetal.metaheuristics.sa;
 
 import jmetal.core.*;
 import jmetal.metaheuristics.nsgaII.NSGAII_SAS;
@@ -54,7 +54,7 @@ import org.femosaa.core.SASProblemFactory;
 import org.femosaa.core.SASSolutionInstantiator;
 import org.femosaa.seed.FixedSeeder;
 
-public class HC_SAS_main extends SASAlgorithmAdaptor{
+public class SA_SAS_main extends SASAlgorithmAdaptor{
 	public static Logger logger_; // Logger object
 	public static FileHandler fileHandler_; // FileHandler object
 
@@ -105,7 +105,7 @@ public class HC_SAS_main extends SASAlgorithmAdaptor{
 			} // else
 		}
 
-		algorithm = new HC_SAS(problem, null);
+		algorithm = new SA_SAS(problem, null);
 
 		// Algorithm parameters
 		int popsize = 331;
@@ -181,7 +181,7 @@ public class HC_SAS_main extends SASAlgorithmAdaptor{
 		}
 		problem = new SAS("SASSolutionType", factory, vars, numberOfObjectives_, numberOfConstraints_);
 
-		algorithm = new HC_SAS(problem, factory);
+		algorithm = new SA_SAS(problem, factory);
 
 		// Algorithm parameters
 		int popsize = 100;
@@ -269,6 +269,6 @@ public class HC_SAS_main extends SASAlgorithmAdaptor{
 	@Override
 	protected SolutionSet doRanking(SolutionSet population) {
 		// TODO Auto-generated method stub
-		return ((HC_SAS)algorithm).doRanking(population);
+		return ((SA_SAS)algorithm).doRanking(population);
 	}
 } // MOEAD_main

@@ -189,13 +189,16 @@ public class RS_SAS_main extends SASAlgorithmAdaptor{
 		algorithm.setInputParameter("populationSize", EAConfigure.getInstance().pop_size);
 		algorithm.setInputParameter("maxEvaluations", EAConfigure.getInstance().pop_size * EAConfigure.getInstance().generation);
 		algorithm.setInputParameter("weights", factory.getWeights());
+		if(factory.getFixedBounds() != null) {
+			algorithm.setInputParameter("fixed_bounds", factory.getFixedBounds());
+		}
 		// Crossover operator
 		parameters = new HashMap();
 		parameters.put("probability", EAConfigure.getInstance().crossover_rate);
 		parameters.put("distributionIndex", 20.0);
 		// This needs to change in testing.
 		parameters.put("jmetal.metaheuristics.moead.SASSolutionInstantiator", factory);
-		crossover = CrossoverFactory.getCrossoverOperator("TwoPointsCrossover", parameters);
+		crossover = CrossoverFactory.getCrossoverOperator("UniformCrossoverSAS", parameters);
 		
 
 		if(SASAlgorithmAdaptor.isSeedSolution) {

@@ -45,6 +45,9 @@ public class HC_SAS extends Algorithm {
 	boolean isNeigboring = true;
 	private Seeder seeder = null;
 	double[] weights = new double[0];
+	
+	// This to be used with single objective only and without any fuzzy setting
+	double[][] fixed_bounds = null;
 	// ideal point
 	double[] z_;
 
@@ -89,6 +92,9 @@ public class HC_SAS extends Algorithm {
 
 		if (getInputParameter("seeder") != null) {
 			seeder = (Seeder) getInputParameter("seeder");
+		}
+		if(getInputParameter("fixed_bounds") != null) {
+			fixed_bounds = (double[][])getInputParameter("fixed_bounds");
 		}
 
 		int maxEvaluations = ((Integer) getInputParameter("maxEvaluations")).intValue();
@@ -141,8 +147,13 @@ public class HC_SAS extends Algorithm {
 		}
 
 		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0) {
-			org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
-					"SolutionSetWithGen.rtf", 0);
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
+						"SolutionSetWithGen.rtf", 0);
+			} else {
+				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+						0);
+			}
 		}
 
 		int index = new Random().nextInt(population.get(0).numberOfVariables());
@@ -203,8 +214,23 @@ public class HC_SAS extends Algorithm {
 						bestS = nextSolution;
 					}
 
+				
+					
+					
+					if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0
+							&& evaluations % SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
+						if(SASAlgorithmAdaptor.isFuzzy) {
+							org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
+									"SolutionSetWithGen.rtf", evaluations);
+						} else {
+							org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+									evaluations);
+						}
+					}
+					
 					evaluations++;
 					measurement += factory.record(nextSolution);
+					
 					if (EAConfigure.getInstance().measurement == measurement) {
 						break;
 					}
@@ -329,6 +355,8 @@ public class HC_SAS extends Algorithm {
 					}
 					
 				}
+				
+			
 			
 			} else {
 
@@ -372,13 +400,29 @@ public class HC_SAS extends Algorithm {
 				evaluations++;
 				if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0
 						&& evaluations % SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
-					org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
-							"SolutionSetWithGen.rtf", evaluations);
+					if(SASAlgorithmAdaptor.isFuzzy) {
+						org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
+								"SolutionSetWithGen.rtf", evaluations);
+					} else {
+						org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+								evaluations);
+					}
 				}
 
 			}
 
 		} // while
+		
+		
+		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				org.femosaa.util.Logger.logSolutionSetWithGenerationAndFuzzyValue(population, old_population,
+						"SolutionSetWithGen.rtf", evaluations);
+			} else {
+				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithGen.rtf", 
+						evaluations);
+			}
+		}
 
 		if (SASAlgorithmAdaptor.isFuzzy) {
 			population = old_population;
@@ -452,6 +496,13 @@ public class HC_SAS extends Algorithm {
 			}
 			return;
 		}
+		
+		if(fixed_bounds != null) {
+			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+				z_[i] = fixed_bounds[i][0];
+			}
+			return;
+		}
 
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
 			z_[i] = 1.0e+30;
@@ -473,6 +524,13 @@ public class HC_SAS extends Algorithm {
 			}
 			return;
 		}
+		
+		if(fixed_bounds != null) {
+			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+				nz_[i] = fixed_bounds[i][1];
+			}
+			return;
+		}
 
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
 			nz_[i] = -1.0e+30;
@@ -491,6 +549,11 @@ public class HC_SAS extends Algorithm {
 		if (SASAlgorithmAdaptor.isFuzzy) {
 			return;
 		}
+		
+		if(fixed_bounds != null) {
+			return;
+		}
+		
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 			if (individual.getObjective(i) < z_[i])
 				z_[i] = individual.getObjective(i);
@@ -507,6 +570,11 @@ public class HC_SAS extends Algorithm {
 		if (SASAlgorithmAdaptor.isFuzzy) {
 			return;
 		}
+		
+		if(fixed_bounds != null) {
+			return;
+		}
+		
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 			if (individual.getObjective(i) > nz_[i])
 				nz_[i] = individual.getObjective(i);

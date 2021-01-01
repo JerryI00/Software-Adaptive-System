@@ -52,6 +52,10 @@ public class SGA_SAS extends Algorithm {
 	SolutionSet population_;
 	
 	double[] weights = new double[0];
+	
+	
+	// This to be used with single objective only and without any fuzzy setting
+	double[][] fixed_bounds = null;
 	/**
 	 * Constructor
 	 * @param problem Problem to solve
@@ -96,6 +100,9 @@ public class SGA_SAS extends Algorithm {
 		Solution kneeIndividual = factory.getSolution(problem_);
 		if(getInputParameter("seeder") != null) {
 			seeder = (Seeder)getInputParameter("seeder");
+		}
+		if(getInputParameter("fixed_bounds") != null) {
+			fixed_bounds = (double[][])getInputParameter("fixed_bounds");
 		}
 		SolutionSet population;
 		SolutionSet offspringPopulation;
@@ -373,6 +380,13 @@ public class SGA_SAS extends Algorithm {
 			return;
 		}
 		
+		if(fixed_bounds != null) {
+			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+				z_[i] = fixed_bounds[i][0];
+			}
+			return;
+		}
+		
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
 			z_[i] = 1.0e+30;
 
@@ -393,6 +407,13 @@ public class SGA_SAS extends Algorithm {
 			return;
 		}
 		
+		if(fixed_bounds != null) {
+			for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+				nz_[i] = fixed_bounds[i][1];
+			}
+			return;
+		}
+		
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++)
 			nz_[i] = -1.0e+30;
 
@@ -408,6 +429,12 @@ public class SGA_SAS extends Algorithm {
 		if(SASAlgorithmAdaptor.isFuzzy) {
 			return;
 		}
+		
+		
+		if(fixed_bounds != null) {
+			return;
+		}
+		
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 			if (individual.getObjective(i) < z_[i])
 				z_[i] = individual.getObjective(i);
@@ -423,6 +450,13 @@ public class SGA_SAS extends Algorithm {
 		if(SASAlgorithmAdaptor.isFuzzy) {
 			return;
 		}
+		
+		
+		if(fixed_bounds != null) {
+			return;
+		}
+		
+		
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
 			if (individual.getObjective(i) != Double.MAX_VALUE/100 && individual.getObjective(i) > nz_[i])
 				nz_[i] = individual.getObjective(i);
