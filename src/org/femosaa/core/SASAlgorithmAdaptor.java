@@ -28,7 +28,7 @@ public abstract class SASAlgorithmAdaptor {
 	// This can be changed within SSASE
 	public static boolean isLogTheEvalNeededToRemiveNonSeed = false;
 	// This is actually number of function evaluation
-	public static int logGenerationOfObjectiveValue = 2000;//500;//5000; // <=0 means disabled.
+	public static int logGenerationOfObjectiveValue = 100;//500;//5000; // <=0 means disabled.
 	// This is to control if fuzzy requirement is enable
 	public static boolean isFuzzy = false; 
 	public static boolean isWeightedSumNormalized = true; 

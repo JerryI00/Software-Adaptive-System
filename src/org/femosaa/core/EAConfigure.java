@@ -72,8 +72,8 @@ public class EAConfigure {
 	}
 	
 	public void setupWSConfigurationOnRun(int gen){
-		con = new EAConfigure(100, gen, 0.8,  0.02);//0.1
-		//con = new EAConfigure(100, 200, 0.8,  0.01);//0.1
+		con = new EAConfigure(100, gen, 0.9,  0.1);//0.1
+		//con = new EAConfigure(100, gen, 0.8,  0.02);//0.1
 	}
 
 }

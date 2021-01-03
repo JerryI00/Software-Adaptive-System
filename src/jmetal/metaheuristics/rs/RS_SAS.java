@@ -268,7 +268,7 @@ public class RS_SAS extends Algorithm {
 			   org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
 		}
 			
-		System.out.print("Measurement: " + measurement + "\n");
+		//System.out.print("Measurement: " + measurement + "\n");
 		
 		return population;
 	} // execute
@@ -287,25 +287,51 @@ public class RS_SAS extends Algorithm {
 	 */
 	public void fitnessAssignment(Solution cur_solution) {
 		double cur_fitness = 0.0;
-		//double weight	   = 1.0 / (double) problem_.getNumberOfObjectives();
-		
+		// double weight = 1.0 / (double) problem_.getNumberOfObjectives();
 
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-			
-			if(SASAlgorithmAdaptor.isWeightedSumNormalized) {
-				if(cur_solution.getObjective(i) == Double.MAX_VALUE/100) {
-					cur_fitness += weights[i] * 1.0;
-					//System.out.print(cur_fitness + " Find one fitness with MAX_VALUE!\n");
+
+			if (SASAlgorithmAdaptor.isWeightedSumNormalized) {
+
+				if (fixed_bounds != null) {
+
+					if (fixed_bounds[0][0] == 0 && fixed_bounds[0][1] == 0 && fixed_bounds[1][0] == 0
+							&& fixed_bounds[1][1] == 0) {
+						cur_fitness += weights[i] * (cur_solution.getObjective(i)/(cur_solution.getObjective(i)+1));
+
+					} else if (fixed_bounds[0][0] == -1 && fixed_bounds[0][1] == -1 && fixed_bounds[1][0] == -1
+							&& fixed_bounds[1][1] == -1) {
+						cur_fitness += weights[i] * cur_solution.getObjective(i);
+					} else {
+						if (cur_solution.getObjective(i) == Double.MAX_VALUE / 100) {
+							cur_fitness += weights[i] * 1.0;
+							// System.out.print(cur_fitness + " Find one fitness with MAX_VALUE!\n");
+						} else {
+
+							cur_fitness += weights[i]
+									* (nz_[i] != z_[i] ? ((cur_solution.getObjective(i) - z_[i]) / (nz_[i] - z_[i]))
+											: ((cur_solution.getObjective(i) - z_[i]) / (nz_[i])));
+						}
+					}
+
 				} else {
-				
-				cur_fitness += weights[i] * (nz_[i] != z_[i]? ((cur_solution.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) : 
-					((cur_solution.getObjective(i) - z_[i]) / (nz_[i])));
-			 }
+
+					if (cur_solution.getObjective(i) == Double.MAX_VALUE / 100) {
+						cur_fitness += weights[i] * 1.0;
+						// System.out.print(cur_fitness + " Find one fitness with MAX_VALUE!\n");
+					} else {
+
+						cur_fitness += weights[i]
+								* (nz_[i] != z_[i] ? ((cur_solution.getObjective(i) - z_[i]) / (nz_[i] - z_[i]))
+										: ((cur_solution.getObjective(i) - z_[i]) / (nz_[i])));
+					}
+				}
 			} else {
 				cur_fitness += weights[i] * cur_solution.getObjective(i);
 			}
+
 		}
-		
+
 		if(Double.isNaN(cur_fitness)) {
 			System.out.print("Find one fitness with NaN!\n");
 			cur_fitness = 0;//-1.0e+30;
