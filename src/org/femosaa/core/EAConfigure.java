@@ -42,14 +42,14 @@ public class EAConfigure {
 	
 	public void setupWSConfiguration(){
 		//con = new EAConfigure(100, 100, 0.9,  0.1);
-		//con = new EAConfigure(100, 300, 0.9,  0.1);
+		con = new EAConfigure(100, 300, 0.9,  0.1);
 		//seeding 100 AS - 
-		con = new EAConfigure(100, 500, 0.8, 0.02);
+		//con = new EAConfigure(100, 500, 0.8, 0.02);
 	}
 	
 	public void setupFLASHConfiguration(){
-		//con = new EAConfigure(100, 500, 0.9,  0.1);
-		con = new EAConfigure(20, 25, 0.9,  0.1);
+		con = new EAConfigure(100, 500, 0.9,  0.1);
+		//con = new EAConfigure(50, 100, 0.9,  0.1);
 	}
 	
 	public void setupNRPConfiguration(){
@@ -72,8 +72,8 @@ public class EAConfigure {
 	}
 	
 	public void setupWSConfigurationOnRun(int gen){
-		con = new EAConfigure(100, gen, 0.9,  0.1);//0.1
-		//con = new EAConfigure(100, gen, 0.8,  0.02);//0.1
+		//con = new EAConfigure(100, gen, 0.9,  0.1);//0.1
+		con = new EAConfigure(100, gen, 0.8,  0.02);//0.1
 	}
 
 }

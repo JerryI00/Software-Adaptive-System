@@ -30,6 +30,10 @@ public class Logger {
 			while(itr.hasNext()) {
 				Solution s = (Solution)itr.next();
 				for(int i = 0; i < s.numberOfObjectives(); i++) {
+					if(i == 0) {
+					//	s.setObjective(0,1.0/(s.getObjective(i) * -1));
+					}
+					
 					data +=  s.getObjective(i) + (i ==  s.numberOfObjectives() - 1? "" : ",");
 				}
 				data += "\n";

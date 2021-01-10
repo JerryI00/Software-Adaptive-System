@@ -464,8 +464,12 @@ public class HC_SAS extends Algorithm {
 
 					if (fixed_bounds[0][0] == 0 && fixed_bounds[0][1] == 0 && fixed_bounds[1][0] == 0
 							&& fixed_bounds[1][1] == 0) {
-						cur_fitness += weights[i] * (cur_solution.getObjective(i)/(cur_solution.getObjective(i)+1));
+						if(cur_solution.getObjective(i) < 0) {
+							cur_fitness += weights[i] * (cur_solution.getObjective(i)/(cur_solution.getObjective(i)-1));
 
+						} else {
+							cur_fitness += weights[i] * (cur_solution.getObjective(i)/(cur_solution.getObjective(i)+1));
+						}
 					} else if (fixed_bounds[0][0] == -1 && fixed_bounds[0][1] == -1 && fixed_bounds[1][0] == -1
 							&& fixed_bounds[1][1] == -1) {
 						cur_fitness += weights[i] * cur_solution.getObjective(i);
