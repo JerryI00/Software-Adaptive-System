@@ -162,4 +162,28 @@ public abstract class Algorithm implements Serializable {
   public Problem getProblem() {
   	return problem_ ;
   }
+  
+  public String convertFullInfo(Solution s) {
+	  
+	  String data = "";
+	  try {
+	 
+
+		for(int i = 0; i < s.numberOfVariables(); i++) {
+			data +=  s.getDecisionVariables()[i].getValue() + (i ==  s.numberOfVariables() - 1? "" : ":");
+		}
+		data += "=";
+		
+		for(int i = 0; i < s.numberOfObjectives(); i++) {		
+			data +=  s.getObjective(i) + (i ==  s.numberOfObjectives() - 1? "" : ",");
+		}
+		
+		
+	  } catch (Exception e) {
+		  
+	  }
+	  
+	  return data;
+  }
+ 
 } // Algorithm

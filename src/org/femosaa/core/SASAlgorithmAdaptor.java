@@ -35,6 +35,8 @@ public abstract class SASAlgorithmAdaptor {
 	// This is to control if all solutions that have ever been found needs to be recalled
 	public static boolean isLogDiscardedSolutions = false; 
 	
+	public static boolean isLogSolutionsInFull = true; // including objectives and vairables for all explored solutions
+	
 	public static boolean logMeasurementOfObjectiveValue = true;
 	
 	public static boolean logNumberOfNoDominated = false;

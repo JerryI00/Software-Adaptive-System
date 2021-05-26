@@ -28,7 +28,7 @@ import java.util.Vector;
  * defined in:
  * H. Li and Q. Zhang. Multiobjective optimization problems with complicated 
  * pareto sets, MOEA/D and NSGA-II. IEEE Transactions on Evolutionary 
- * Computation, 12(2):284Ð302, April 2009.
+ * Computation, 12(2):284302, April 2009.
  */
 public class LZ09 {
 	

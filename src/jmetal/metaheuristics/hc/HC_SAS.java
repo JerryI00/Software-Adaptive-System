@@ -21,7 +21,10 @@
 
 package jmetal.metaheuristics.hc;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 
 import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
@@ -46,6 +49,7 @@ public class HC_SAS extends Algorithm {
 	private Seeder seeder = null;
 	double[] weights = new double[0];
 	
+	private Set<String> full_set;
 	// This to be used with single objective only and without any fuzzy setting
 	double[][] fixed_bounds = null;
 	// ideal point
@@ -85,6 +89,11 @@ public class HC_SAS extends Algorithm {
 	 * @throws JMException
 	 */
 	public SolutionSet execute() throws JMException, ClassNotFoundException {
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			full_set = new HashSet<String>();
+		}
+		
 
 		if (factory == null) {
 			throw new RuntimeException("No instance of SASSolutionInstantiator found!");
@@ -131,6 +140,15 @@ public class HC_SAS extends Algorithm {
 				population.add(newSolution);
 				fitnessAssignment(newSolution);
 			} // for
+		}
+		
+
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			Iterator itr = population.iterator();
+			while(itr.hasNext()) {
+				full_set.add(convertFullInfo((Solution)itr.next()));
+			}
+			
 		}
 
 		initIdealPoint();
@@ -202,6 +220,10 @@ public class HC_SAS extends Algorithm {
 					problem_.evaluate(nextSolution);
 					problem_.evaluateConstraints(nextSolution);
 					
+					if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+						full_set.add(convertFullInfo(nextSolution));
+					}
+					
 					updateReference(nextSolution);
 					updateNadirPoint(nextSolution);
 
@@ -263,7 +285,9 @@ public class HC_SAS extends Algorithm {
 					startingPoint = newSolution;
 					fitnessAssignment(newSolution);
 					
-					
+					if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+						full_set.add(convertFullInfo(newSolution));
+					}
 				}
 				
 
@@ -434,6 +458,10 @@ public class HC_SAS extends Algorithm {
 			org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
 		}
 		
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			org.femosaa.util.Logger.logSolutionFull(full_set, "FullSolution.rtf");
+		}
 		
 
 		return population;

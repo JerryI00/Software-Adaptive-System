@@ -21,7 +21,10 @@
 
 package jmetal.metaheuristics.rs;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 
 import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
@@ -42,7 +45,7 @@ public class RS_SAS extends Algorithm {
 
 	private SASSolutionInstantiator factory = null;
 	
-
+	private Set<String> full_set;
 	// ideal point
 	double[] z_;
 
@@ -80,6 +83,10 @@ public class RS_SAS extends Algorithm {
 	 * @throws JMException 
 	 */
 	public SolutionSet execute() throws JMException, ClassNotFoundException {
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			full_set = new HashSet<String>();
+		}
 		
 		if (factory == null) {
 			throw new RuntimeException("No instance of SASSolutionInstantiator found!");
@@ -129,6 +136,15 @@ public class RS_SAS extends Algorithm {
 				fitnessAssignment(newSolution);
 			} // for
 		}     
+		
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			Iterator itr = population.iterator();
+			while(itr.hasNext()) {
+				full_set.add(convertFullInfo((Solution)itr.next()));
+			}
+			
+		}
 
 		initIdealPoint();
 		initNadirPoint();
@@ -182,6 +198,10 @@ public class RS_SAS extends Algorithm {
 			
 			problem_.evaluate(nextSolution);
 			problem_.evaluateConstraints(nextSolution);
+			
+			if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+				full_set.add(convertFullInfo(nextSolution));
+			}
 			
 			if(SASAlgorithmAdaptor.isLogToD && nextSolution.getObjective(0) <= SASAlgorithmAdaptor.d && te == 0.0) {
 				System.out.print("Found one with " + evaluations + "\n");
@@ -269,6 +289,12 @@ public class RS_SAS extends Algorithm {
 		}
 			
 		//System.out.print("Measurement: " + measurement + "\n");
+		
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			org.femosaa.util.Logger.logSolutionFull(full_set, "FullSolution.rtf");
+		}
+		
 		
 		return population;
 	} // execute

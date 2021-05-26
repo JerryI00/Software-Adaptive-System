@@ -21,6 +21,10 @@
 
 package jmetal.metaheuristics.sga;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
 import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
@@ -40,6 +44,8 @@ public class SGA_SAS extends Algorithm {
 
 	private SASSolutionInstantiator factory = null;
 	private Seeder seeder = null;
+	
+	private Set<String> full_set;
 
 	// ideal point
 	double[] z_;
@@ -81,6 +87,10 @@ public class SGA_SAS extends Algorithm {
 	 * @throws JMException 
 	 */
 	public SolutionSet execute() throws JMException, ClassNotFoundException {
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			full_set = new HashSet<String>();
+		}
 		
 		if (factory == null) {
 			throw new RuntimeException("No instance of SASSolutionInstantiator found!");
@@ -154,6 +164,14 @@ public class SGA_SAS extends Algorithm {
 				measurement += factory.record(newSolution);
 				population.add(newSolution);
 			} //for   
+		}
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			Iterator itr = population.iterator();
+			while(itr.hasNext()) {
+				full_set.add(convertFullInfo((Solution)itr.next()));
+			}
+			
 		}
 
 		initIdealPoint();
@@ -231,6 +249,12 @@ public class SGA_SAS extends Algorithm {
 					offspringPopulation.add(offSpring[0]);
 					offspringPopulation.add(offSpring[1]);
 					evaluations += 2;
+					
+					
+					if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+						full_set.add(convertFullInfo((Solution)offSpring[0]));
+						full_set.add(convertFullInfo((Solution)offSpring[1]));
+					}
 				} // if                            
 			} // for
 
@@ -299,6 +323,10 @@ public class SGA_SAS extends Algorithm {
 		if(SASAlgorithmAdaptor.isLogToD) {
 			   System.out.print("Minimum evaluation " + te + "\n");
 			   org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
+		}
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			org.femosaa.util.Logger.logSolutionFull(full_set, "FullSolution.rtf");
 		}
 			
 		

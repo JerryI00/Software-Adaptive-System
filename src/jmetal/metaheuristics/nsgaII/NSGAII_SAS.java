@@ -21,7 +21,9 @@
 
 package jmetal.metaheuristics.nsgaII;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
@@ -47,7 +49,7 @@ public class NSGAII_SAS extends Algorithm {
 	private Seeder seeder = null;
 	SolutionSet population_;
 
-	
+	private Set<String> full_set;
 	/**
 	 * Constructor
 	 * @param problem Problem to solve
@@ -73,6 +75,10 @@ public class NSGAII_SAS extends Algorithm {
 	 * @throws JMException 
 	 */
 	public SolutionSet execute() throws JMException, ClassNotFoundException {
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			full_set = new HashSet<String>();
+		}
 		
 		if (factory == null) {
 			throw new RuntimeException("No instance of SASSolutionInstantiator found!");
@@ -137,6 +143,14 @@ public class NSGAII_SAS extends Algorithm {
 				measurement += factory.record(newSolution);
 				population.add(newSolution);
 			} //for 
+		}
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			Iterator itr = population.iterator();
+			while(itr.hasNext()) {
+				full_set.add(convertFullInfo((Solution)itr.next()));
+			}
+			
 		}
 		
 		SolutionSet old_population = new SolutionSet(populationSize);
@@ -261,6 +275,11 @@ public class NSGAII_SAS extends Algorithm {
 					if(((SASSolution)parents[0]).isFromInValid || ((SASSolution)parents[1]).isFromInValid) {
 						((SASSolution)offSpring[0]).isFromInValid = true;
 						((SASSolution)offSpring[1]).isFromInValid = true;
+					}
+					
+					if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+						full_set.add(convertFullInfo((Solution)offSpring[0]));
+						full_set.add(convertFullInfo((Solution)offSpring[1]));
 					}
 					
 				} // if                            
@@ -414,6 +433,10 @@ public class NSGAII_SAS extends Algorithm {
 		if(SASAlgorithmAdaptor.isFuzzy) {
 			population = old_population;
 			org.femosaa.util.Logger.logFinalEvaluation("FinalEvaluationCount.rtf", evaluations);
+		}
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			org.femosaa.util.Logger.logSolutionFull(full_set, "FullSolution.rtf");
 		}
 		
 		/*if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {

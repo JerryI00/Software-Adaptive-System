@@ -21,7 +21,10 @@
 
 package jmetal.metaheuristics.sa;
 
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 
 import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SASAlgorithmAdaptor;
@@ -41,6 +44,8 @@ import jmetal.util.*;
 public class SA_SAS extends Algorithm {
 
 	private SASSolutionInstantiator factory = null;
+	
+	private Set<String> full_set;
 
 	boolean isNeigboring = true;
 	private Seeder seeder = null;
@@ -90,6 +95,12 @@ public class SA_SAS extends Algorithm {
 	 * @throws JMException
 	 */
 	public SolutionSet execute() throws JMException, ClassNotFoundException {
+		
+		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			full_set = new HashSet<String>();
+		}
+		
 
 		if (factory == null) {
 			throw new RuntimeException("No instance of SASSolutionInstantiator found!");
@@ -138,6 +149,14 @@ public class SA_SAS extends Algorithm {
 			} // for
 		}
 
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			Iterator itr = population.iterator();
+			while(itr.hasNext()) {
+				full_set.add(convertFullInfo((Solution)itr.next()));
+			}
+			
+		}
+		
 		initIdealPoint();
 		initNadirPoint();
 
@@ -204,6 +223,11 @@ public class SA_SAS extends Algorithm {
 
 			problem_.evaluate(nextSolution);
 			problem_.evaluateConstraints(nextSolution);
+			
+
+			if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+				full_set.add(convertFullInfo((Solution)nextSolution));
+			}
 
 			updateReference(nextSolution);
 			updateNadirPoint(nextSolution);
@@ -240,7 +264,9 @@ public class SA_SAS extends Algorithm {
 			if (isMove) {
 				population.clear();
 				population.add(bestS);
-				startingPoint = bestS;
+				//startingPoint = bestS;
+				startingPoint = nextSolution;
+				
 				//System.out.print("has better one\n");
 			} 
 
@@ -291,7 +317,9 @@ public class SA_SAS extends Algorithm {
 			org.femosaa.util.Logger.logFirstTod(te, "FirstToD.rtf");
 		}
 		
-		
+		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+			org.femosaa.util.Logger.logSolutionFull(full_set, "FullSolution.rtf");
+		}
 
 		return population;
 	} // execute
