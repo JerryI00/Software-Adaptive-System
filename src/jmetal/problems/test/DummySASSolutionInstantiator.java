@@ -105,4 +105,10 @@ public class DummySASSolutionInstantiator implements SASSolutionInstantiator {
 		return null;
 	}
 
+	@Override
+	public SolutionSet fuzzilize(SolutionSet set, double increment) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

@@ -29,6 +29,8 @@ public interface SASSolutionInstantiator {
 	
 	public SolutionSet fuzzilize (SolutionSet set);
 	
+	public SolutionSet fuzzilize(SolutionSet set, double increment);
+	
 	public Solution defuzzilize(int i, SolutionSet newPopulation, SolutionSet oldPopulation);
 	
 	public Solution defuzzilize(Solution s, SolutionSet oldPopulation);

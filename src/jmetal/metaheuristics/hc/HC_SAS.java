@@ -127,7 +127,20 @@ public class HC_SAS extends Algorithm {
 		if (seeder != null) {
 			seeder.seeding(population, factory, problem_, populationSize);
 			evaluations += populationSize;
-			measurement += factory.record(population);
+			if(!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
+				for (int i = 0; i < populationSize; i++) {
+					Solution s = population.get(i);
+					if(s.getObjective(0) == Double.MAX_VALUE || s.getObjective(0) == Double.MAX_VALUE/100) {
+						
+					} else {
+						measurement += factory.record(s);
+					}
+				}
+				
+				
+			} else {
+				measurement += factory.record(population);
+			}
 			fitnessAssignment(population.get(0));
 		} else {
 			// Create the initial solutionSet
@@ -136,7 +149,18 @@ public class HC_SAS extends Algorithm {
 				problem_.evaluate(newSolution);
 				problem_.evaluateConstraints(newSolution);
 				evaluations++;
-				measurement += factory.record(newSolution);
+				if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
+
+					if (newSolution.getObjective(0) == Double.MAX_VALUE
+							|| newSolution.getObjective(0) == Double.MAX_VALUE / 100) {
+
+					} else {
+						measurement += factory.record(newSolution);
+					}
+
+				} else {
+					measurement += factory.record(newSolution);
+				}
 				population.add(newSolution);
 				fitnessAssignment(newSolution);
 			} // for
@@ -251,7 +275,18 @@ public class HC_SAS extends Algorithm {
 					}
 					
 					evaluations++;
-					measurement += factory.record(nextSolution);
+					if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
+
+						if (nextSolution.getObjective(0) == Double.MAX_VALUE
+								|| nextSolution.getObjective(0) == Double.MAX_VALUE / 100) {
+
+						} else {
+							measurement += factory.record(nextSolution);
+						}
+
+					} else {
+						measurement += factory.record(nextSolution);
+					}
 					
 					if (EAConfigure.getInstance().measurement == measurement) {
 						break;
@@ -281,7 +316,18 @@ public class HC_SAS extends Algorithm {
 					problem_.evaluate(newSolution);
 					problem_.evaluateConstraints(newSolution);
 					evaluations++;
-					measurement += factory.record(newSolution);
+					if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
+
+						if (newSolution.getObjective(0) == Double.MAX_VALUE
+								|| newSolution.getObjective(0) == Double.MAX_VALUE / 100) {
+
+						} else {
+							measurement += factory.record(newSolution);
+						}
+
+					} else {
+						measurement += factory.record(newSolution);
+					}
 					startingPoint = newSolution;
 					fitnessAssignment(newSolution);
 					

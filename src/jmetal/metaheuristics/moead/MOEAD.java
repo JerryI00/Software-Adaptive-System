@@ -125,8 +125,8 @@ public class MOEAD extends Algorithm {
 		int measurement = 0;
 
 		population_  = new SolutionSet(populationSize_);
-
-		T_ 	   = 20;
+		//functionType_ = "AGG"; //only nrp and services use it
+		T_ 	   = populationSize_/2;//20
 		delta_ = 0.9;
 		
 		if(populationSize_ < T_) {
@@ -163,10 +163,7 @@ public class MOEAD extends Algorithm {
 			      //savedValues_[i] = factory.getSolution(newSolution);
 			    }
 		}
-		// STEP 1.3. initialize the ideal and nadir points
-		initIdealPoint();
-		initNadirPoint();
-		long time = Long.MAX_VALUE;
+		
 		
 		
 		SolutionSet old_population = new SolutionSet(populationSize_);
@@ -174,6 +171,11 @@ public class MOEAD extends Algorithm {
 			old_population = population_;
 			population_ = factory.fuzzilize(population_);
 		}
+		
+		// STEP 1.3. initialize the ideal and nadir points
+		initIdealPoint();
+		initNadirPoint();
+		long time = Long.MAX_VALUE;
 		
 		
 		/* STEP 2. UPDATE */
@@ -217,11 +219,16 @@ public class MOEAD extends Algorithm {
 				evaluations_++;
 				evaluations_++;
 				// STEP 2.3. update the ideal and nadir points
-				updateReference(children[0]);
-				updateNadirPoint(children[0]);
 				
-				updateReference(children[1]);
-				updateNadirPoint(children[1]);
+				if(!SASAlgorithmAdaptor.isFuzzy) {
+					updateReference(children[0]);
+					updateNadirPoint(children[0]);
+					
+					updateReference(children[1]);
+					updateNadirPoint(children[1]);
+				}
+				
+				
 
 				// add into the offspring population
 				currentOffspring_.add(children[0]);
@@ -239,7 +246,27 @@ public class MOEAD extends Algorithm {
 			if(SASAlgorithmAdaptor.isFuzzy) {
 				SolutionSet union = ((SolutionSet) old_population).union(currentOffspring_);
 				SolutionSet old_union = union;
+				if(SASAlgorithmAdaptor.isBoundNormalizationForTarget) {
+					((SASSolution)old_population.get(0)).resetNormalizationBounds(0);
+					((SASSolution)old_population.get(0)).resetNormalizationBounds(1);
+					/*for(int i = 0; i < union.size(); i++) {
+						((SASSolution)union.get(i)).updateNormalizationBounds(new double[] {union.get(i).getObjective(0),
+								union.get(i).getObjective(1)});
+					}*/
+					
+					for(int i = 0; i < old_population.size(); i++) {
+						((SASSolution)old_population.get(i)).updateNormalizationBounds(new double[] {old_population.get(i).getObjective(0),
+								old_population.get(i).getObjective(1)});
+					}
+				}
 				union = factory.fuzzilize(union);
+				
+				for(int i = 0; i < union.size(); i++) {
+					// update with the fuzzy values
+					updateReference(union.get(i));
+					updateNadirPoint(union.get(i));
+				}
+				
 				old_population.clear();
 				population_.clear();
 				//System.out.print("fuzzy----\n");
@@ -255,6 +282,10 @@ public class MOEAD extends Algorithm {
 				}
 				
 				for (int i = 0; i < population_.size(); i++) {
+					/*System.out.print("***\n");
+					System.out.print("fuzzy value = " + population_.get(i).getObjective(0) + ":" + population_.get(i).getObjective(1) + "\n");
+					System.out.print("orignal value = " + factory.defuzzilize(population_.get(i), old_union).getObjective(0) + ":" + factory.defuzzilize(population_.get(i), old_union).getObjective(1) + "\n");
+					System.out.print("***\n");*/
 					old_population.add(factory.defuzzilize(population_.get(i), old_union));
 					//System.out.print("original: " + old_population.get(i).getObjective(0) + " : " + old_population.get(i).getObjective(1)+"\n");
 					//System.out.print("fuzzy: " + population_.get(i).getObjective(0) + " : " + population_.get(i).getObjective(1)+"\n");
@@ -269,8 +300,10 @@ public class MOEAD extends Algorithm {
 					this.updateNeighborhood(currentOffspring_.get(i*2), i, type);
 					this.updateNeighborhood(currentOffspring_.get(i*2+1), i, type);
 				}*/
-				
 				for (int i = 0; i < populationSize_; i++) {
+					if(i >= currentOffspring_.size()) {
+						break;
+					}
 					this.updateNeighborhood(currentOffspring_.get(i), i, type);
 				}
 			}
@@ -867,10 +900,11 @@ public class MOEAD extends Algorithm {
    	 */
 	void updateReference(Solution individual) {
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-			if(SASAlgorithmAdaptor.isFuzzy) {
+			// update dynamically even for normalized solutions, as sometime, e.g., in MMO, this does not have to be 0-1
+			/*if(SASAlgorithmAdaptor.isFuzzy) {
 				z_[i] = 0.0;
 				continue;
-			}
+			}*/
 			if (individual.getObjective(i) < z_[i])
 				z_[i] = individual.getObjective(i);
 		}
@@ -883,10 +917,10 @@ public class MOEAD extends Algorithm {
   	 */
 	void updateNadirPoint(Solution individual) {
 		for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
-			if(SASAlgorithmAdaptor.isFuzzy) {
+			/*if(SASAlgorithmAdaptor.isFuzzy) {
 				nz_[i] = 1.0;
 				continue;
-			}
+			}*/
 			if (individual.getObjective(i) != Double.MAX_VALUE/100 && individual.getObjective(i) > nz_[i])
 				nz_[i] = individual.getObjective(i);
 		}
@@ -1048,7 +1082,17 @@ public class MOEAD extends Algorithm {
 			double d2 = norm_vector(realB);
 
 			fitness = d1 + theta * d2;
-		} else {
+		} else if (functionType_.equals("AGG"))
+			{
+				double sum = 0.0;
+			      for (int i = 0; i < problem_.getNumberOfObjectives(); i++) {
+			    	double a = nz_[i] != z_[i]? Math.abs((individual.getObjective(i) - z_[i]) / (nz_[i] - z_[i])) :
+						Math.abs((individual.getObjective(i)- z_[i]) / (nz_[i]));
+			        sum += (lambda[i]) * a;
+			      }
+
+			      fitness = sum;
+			}else {
 			System.out.println("MOEAD.fitnessFunction: unknown type "
 					+ functionType_);
 			System.exit(-1);

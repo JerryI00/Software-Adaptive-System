@@ -13,14 +13,14 @@ public abstract class SASAlgorithmAdaptor {
 	public static String valid1 = "", valid2 = "", invalid1 = "", invalid2 = "";
 	//protected static double MUTATION_RATE = 0.1;
 	//protected static double CROSSOVER_RATE = 0.9;
-	private static final boolean PRINT_SOLUTIONS = true; /*important*/
-	private static final boolean PRINT_INVALID_SOLUTIONS = false;
-	private static final boolean LOG_SOLUTIONS = true; /*important*/
-	private static final boolean LOG_NON_DOMINATED_SOLUTIONS = false;
+	public static boolean PRINT_SOLUTIONS = true; /*important*/
+	public static boolean PRINT_INVALID_SOLUTIONS = false;
+	public static boolean LOG_SOLUTIONS = true; /*important*/
+	public static boolean LOG_NON_DOMINATED_SOLUTIONS = false;
 	
 	public static boolean isLogToD = false;
 	public static double d = 14.5;
-	private static final boolean LOG_SOLUTIONS_VALUES = false; /*important*/
+	private static final boolean LOG_SOLUTIONS_VALUES = true; /*important*/
 	// This can be changed within SSASE
 	public static boolean isPreserveInvalidSolution = false;
 	// This can be changed within SSASE
@@ -28,17 +28,31 @@ public abstract class SASAlgorithmAdaptor {
 	// This can be changed within SSASE
 	public static boolean isLogTheEvalNeededToRemiveNonSeed = false;
 	// This is actually number of function evaluation
-	public static int logGenerationOfObjectiveValue = 100;//500;//5000; // <=0 means disabled.
+	public static int logGenerationOfObjectiveValue = -1;//100;//500;//5000; // <=0 means disabled.
 	// This is to control if fuzzy requirement is enable
 	public static boolean isFuzzy = false; 
 	public static boolean isWeightedSumNormalized = true; 
 	// This is to control if all solutions that have ever been found needs to be recalled
 	public static boolean isLogDiscardedSolutions = false; 
 	
-	public static boolean isLogSolutionsInFull = true; // including objectives and vairables for all explored solutions
+	public static boolean isLogSolutionsInFull = false; // including objectives and vairables for all explored solutions
 	
 	public static boolean logMeasurementOfObjectiveValue = true;
 	
+	public static boolean logMeasurementOfFuzzyObjectiveValue = false;
+	
+	public static boolean logMeasurementOfRemovedObjectiveValue = false;
+	
+	public static boolean logMeasurementOfObjectiveValueTwoPop = false;
+	
+	public static boolean logPreivousAndCurrentPopToBest = false;
+	public static boolean isBoundNormalizationForTarget = true;
+	
+	public static boolean isToFilterRedundantSolution = false; // in terms of configuration
+	
+	public static boolean isInvalidSolutionConsumeMeasurement = true; // true by default
+	
+	public static double[] best_to_log = new double[] {-0.581699346,84.25054645999998/*-32.395,1051.968254*/};
 	public static boolean logNumberOfNoDominated = false;
 
 	// For SGA, this means the total time

@@ -59,6 +59,7 @@ public class SGA_SAS extends Algorithm {
 	
 	double[] weights = new double[0];
 	
+	boolean isChange = true;
 	
 	// This to be used with single objective only and without any fuzzy setting
 	double[][] fixed_bounds = null;
@@ -154,14 +155,38 @@ public class SGA_SAS extends Algorithm {
 		if (seeder != null) {
 			seeder.seeding(population, factory, problem_, populationSize);
 			evaluations += populationSize;
-			measurement += factory.record(population);
+			if(!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
+				for (int i = 0; i < populationSize; i++) {
+					Solution s = population.get(i);
+					if(s.getObjective(0) == Double.MAX_VALUE || s.getObjective(0) == Double.MAX_VALUE/100) {
+						
+					} else {
+						measurement += factory.record(s);
+					}
+				}
+				
+				
+			} else {
+				measurement += factory.record(population);
+			}
 		} else {
 			for (int i = 0; i < populationSize; i++) {
 				newSolution = factory.getSolution(problem_);
 				problem_.evaluate(newSolution);
 				problem_.evaluateConstraints(newSolution);
 				evaluations++;
-				measurement += factory.record(newSolution);
+				if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
+
+					if (newSolution.getObjective(0) == Double.MAX_VALUE
+							|| newSolution.getObjective(0) == Double.MAX_VALUE / 100) {
+
+					} else {
+						measurement += factory.record(newSolution);
+					}
+
+				} else {
+					measurement += factory.record(newSolution);
+				}
 				population.add(newSolution);
 			} //for   
 		}
@@ -221,13 +246,35 @@ public class SGA_SAS extends Algorithm {
 					mutationOperator.execute(offSpring[1]);
 					problem_.evaluate(offSpring[0]);
 					problem_.evaluateConstraints(offSpring[0]);
-					measurement += factory.record(offSpring[0]);
+					if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
+
+						if (offSpring[0].getObjective(0) == Double.MAX_VALUE
+								|| offSpring[0].getObjective(0) == Double.MAX_VALUE / 100) {
+
+						} else {
+							measurement += factory.record(offSpring[0]);
+						}
+
+					} else {
+						measurement += factory.record(offSpring[0]);
+					}
 					if(EAConfigure.getInstance().measurement == measurement) {
 						break;
 					}
 					problem_.evaluate(offSpring[1]);
 					problem_.evaluateConstraints(offSpring[1]);
-					measurement += factory.record(offSpring[1]);
+					if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
+
+						if (offSpring[1].getObjective(0) == Double.MAX_VALUE
+								|| offSpring[1].getObjective(0) == Double.MAX_VALUE / 100) {
+
+						} else {
+							measurement += factory.record(offSpring[1]);
+						}
+
+					} else {
+						measurement += factory.record(offSpring[1]);
+					}
 					if(EAConfigure.getInstance().measurement == measurement) {
 						break;
 					}
@@ -310,6 +357,34 @@ public class SGA_SAS extends Algorithm {
 							measurement );
 				}
 				
+			}
+			
+			if(measurement >= EAConfigure.getInstance().measurement/2 && !isChange) {
+				isChange = true;
+				factory.fuzzilize(union, 0);
+				
+				//((SASSolution)population.get(0)).resetNormalizationBounds(0);
+				//((SASSolution)population.get(0)).resetNormalizationBounds(1);
+				/*for(int i = 0; i < union.size(); i++) {
+					((SASSolution)union.get(i)).updateNormalizationBounds(new double[] {union.get(i).getObjective(0),
+							union.get(i).getObjective(1)});
+				}*/
+				z_  = new double[problem_.getNumberOfObjectives()];
+			    nz_ = new double[problem_.getNumberOfObjectives()];
+			    
+				for(int i = 0; i < population.size(); i++) {
+					problem_.evaluate(population.get(i));
+					updateReference(population.get(i));
+					updateNadirPoint(population.get(i));
+					//((SASSolution)old_population.get(i)).updateNormalizationBounds(new double[] {old_population.get(i).getObjective(0),
+					//		old_population.get(i).getObjective(1)});
+				}
+				//measurement += population.size();
+				//SolutionSet ss = factory.fuzzilize(population);
+				//population.clear();
+				//population.union(ss);
+				
+				System.out.print("Finish changing...\n");
 			}
 
 		} // while

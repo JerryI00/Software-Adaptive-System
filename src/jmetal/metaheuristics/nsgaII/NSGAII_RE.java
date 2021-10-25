@@ -34,7 +34,7 @@ import jmetal.util.*;
 public class NSGAII_RE extends Algorithm {
 
 	/**
-	 * Constructor
+	 * Constructor 
 	 * 
 	 * @param problem
 	 *            Problem to solve

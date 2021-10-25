@@ -34,7 +34,12 @@ public abstract class SASSolution extends Solution {
 
 	protected static double[][] optionalVariables;
 	
+	private Solution p1;
+	private Solution p2;
 	//public abstract double getVariableValueFromIndexValue(int indexValue);
+	
+	// this is for test only
+	public int index = 0;
 
 	public SASSolution(Problem problem) throws ClassNotFoundException {
 		super(problem);
@@ -70,6 +75,7 @@ public abstract class SASSolution extends Solution {
 	 */
 	public abstract void updateNormalizationBounds(double[] f);
 	
+	public abstract void resetNormalizationBounds(int i);
 	
 	public static synchronized void init(double[][] optionalVariables) {
 		SASSolution.optionalVariables = optionalVariables;
@@ -106,6 +112,15 @@ public abstract class SASSolution extends Solution {
 		//vars[i] = v1;
 		}
 		System.out.print(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory() + "\n");
+	}
+	
+	public void setParents(Solution p1,Solution p2) {
+		this.p1 = p1;
+		this.p2 = p2;
+	}
+	
+	public Solution[] getParents() {
+		return new Solution[] {p1,p2};
 	}
 	
 	

@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import org.femosaa.core.EAConfigure;
+import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
 
 import jmetal.core.Solution;
@@ -15,7 +16,7 @@ import jmetal.core.SolutionSet;
 public class Logger {
 	public static String prefix = "/Users/" + System.getProperty("user.name") + "/research/monitor/ws-soa/sas/";
 	// This attribute is only used for testing
-	public static int max_number_of_eval_to_have_only_seed = 0;
+	public static int max_number_of_eval_to_have_only_seed = 0; 
 
 	public static synchronized void logSolutionSet(SolutionSet pareto_front, String name) {
 		File file = null;
@@ -120,6 +121,92 @@ public class Logger {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+	}
+	
+	public static synchronized void logSolutionSetWithGenerationAndBreaket(SolutionSet pareto_front, String name, int gen) {
+		File file = null;
+		if (!(file = new File(prefix)).exists()) {
+			file.mkdirs();
+		}
+
+		try {
+			BufferedWriter bw = new BufferedWriter(new FileWriter(prefix + name, true));
+
+			String data = "";
+			Iterator itr = pareto_front.iterator();
+			while (itr.hasNext()) {
+				Solution s = (Solution) itr.next();
+				data += "(";
+				for (int i = 0; i < s.numberOfObjectives(); i++) {
+					data += s.getObjective(i) + (i == s.numberOfObjectives() - 1 ? "" : ",");
+				}
+				data += ")\n";
+			}
+
+			bw.write(data);
+			bw.write("------------:" + gen + ":------------\n");
+			bw.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+	
+	public static synchronized boolean logSolutionSetWithGenerationOnBest(SolutionSet pareto_front, String name, int gen) {
+		
+		boolean result = false;
+		SolutionSet sol = new SolutionSet();
+		for(int i = 0; i < pareto_front.size(); i++) {
+			Solution s = pareto_front.get(i);
+			if(s.getObjective(0) == SASAlgorithmAdaptor.best_to_log[0] &&
+					s.getObjective(1) == SASAlgorithmAdaptor.best_to_log[1]) {
+				
+				result = true;	
+				sol.add(s);
+			}
+		}
+		
+		if(result) {
+			File file = null;
+			if (!(file = new File(prefix)).exists()) {
+				file.mkdirs();
+			}
+
+			try {
+				BufferedWriter bw = new BufferedWriter(new FileWriter(prefix + name, true));
+
+				String data = "";
+				Iterator itr = sol.iterator();
+				while (itr.hasNext()) {
+					Solution[] two_s = ((SASSolution) itr.next()).getParents();
+					
+					Solution s1 = two_s[0];
+					Solution s2 = two_s[1];
+					
+					for (int i = 0; i < s1.numberOfObjectives(); i++) {
+						data += s1.getObjective(i) + (i == s1.numberOfObjectives() - 1 ? "" : ",");
+					}
+					data += "\n";
+					
+					for (int i = 0; i < s2.numberOfObjectives(); i++) {
+						data += s2.getObjective(i) + (i == s2.numberOfObjectives() - 1 ? "" : ",");
+					}
+					data += "\n";
+					
+					data += "+++++++++++++++++\n";
+				}
+				
+
+				bw.write(data);
+				bw.write("------------:" + gen + ":------------\n");
+				bw.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return result;
 
 	}
 
@@ -262,7 +349,7 @@ public class Logger {
 			while (itr.hasNext()) {
 				Solution s = (Solution) itr.next();
 				for (int i = 0; i < s.numberOfVariables(); i++) {
-					data += s.getDecisionVariables()[i].getValue() + (i == s.numberOfVariables() - 1 ? "" : ",");
+					data += s.getDecisionVariables()[i].getValue() + (i == s.numberOfVariables() - 1 ? "" : ":");
 				}
 				data += "\n";
 			}

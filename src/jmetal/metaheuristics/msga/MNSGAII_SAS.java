@@ -19,9 +19,11 @@
 //  You should have received a copy of the GNU Lesser General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package jmetal.metaheuristics.nsgaII;
+package jmetal.metaheuristics.msga;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -40,10 +42,10 @@ import jmetal.util.*;
 
 /**
  * 
- * @author keli, taochen
+ * @author taochen
  *
  */
-public class NSGAII_SAS extends Algorithm {
+public class MNSGAII_SAS extends Algorithm {
 
 	private SASSolutionInstantiator factory = null;
 	
@@ -51,13 +53,14 @@ public class NSGAII_SAS extends Algorithm {
 	private Seeder seeder = null;
 	SolutionSet population_;
 	boolean logOnce = false;
+	private boolean isChange = true;
 
 	private Set<String> full_set;
 	/**
 	 * Constructor
 	 * @param problem Problem to solve
 	 */
-	public NSGAII_SAS(Problem problem) {
+	public MNSGAII_SAS(Problem problem) {
 		super (problem) ;
 	} // NSGAII
 
@@ -66,7 +69,7 @@ public class NSGAII_SAS extends Algorithm {
   	 * Constructor
   	 * @param problem Problem to solve
   	 */
-	public NSGAII_SAS(Problem problem, SASSolutionInstantiator factory) {
+	public MNSGAII_SAS(Problem problem, SASSolutionInstantiator factory) {
 		super(problem);
         this.factory = factory;
 	}
@@ -415,6 +418,72 @@ public class NSGAII_SAS extends Algorithm {
 			// Create the solutionSet union of solutionSet and offSpring			
 			if(SASAlgorithmAdaptor.isFuzzy) {			
 				union = ((SolutionSet) old_population).union(offspringPopulation);
+				//twoNeighbour(union);
+				smallestDistance(union);
+				// Max and min difference
+				/*for(int i = 0; i < union.size(); i++) {
+					Solution s = union.get(i);
+					double max = Double.NEGATIVE_INFINITY;
+					double min = Double.MAX_VALUE;
+					if(s.getObjective(0) == Double.MAX_VALUE / 100) {
+						s.setObjective(1,Double.MAX_VALUE / 100);
+						continue;
+					}
+					
+					
+					for(int j = 0; j < union.size();j++) {
+						
+						
+						
+						if(i != j) {
+							
+							if(union.get(j).getObjective(0) == Double.MAX_VALUE / 100) {
+								continue;
+							}
+							
+							
+							if(Math.abs(union.get(j).getObjective(0) - s.getObjective(0)) > max) {
+								max = union.get(j).getObjective(0);
+							}
+							
+							if(Math.abs(union.get(j).getObjective(0) - s.getObjective(0)) < min) {
+								min = union.get(j).getObjective(0);
+							}
+							
+							
+						}
+						
+					}
+					
+					if( max == Double.NEGATIVE_INFINITY && min == Double.MAX_VALUE) {
+						s.setObjective(1,s.getObjective(0));
+					} else {
+						s.setObjective(1, (max + min) / 2.0);
+					}
+					
+					
+					//System.out.print(total / (union.size()-1) + "****\n");
+				}*/
+				//System.out.print(total / (union.size()-1) + "****\n");
+				
+				// normal novelty score
+				/*for(int i = 0; i < union.size(); i++) {
+					Solution s = union.get(i);
+					double total = 0;
+					for(int j = 0; j < union.size();j++) {
+						if(i != j) {
+							Variable[] a = s.getDecisionVariables();
+							Variable[] b = union.get(j).getDecisionVariables();
+							double d = distance(a,b);
+							total += d;
+						}
+						
+					}
+					s.setObjective(1, total / (union.size()-1));
+					//System.out.print(total / (union.size()-1) + "****\n");
+				}*/
+				
+				// $$$$$$$$$$$$$$$$$$$
 				old_union = union;
 				if(SASAlgorithmAdaptor.isBoundNormalizationForTarget) {
 					((SASSolution)old_population.get(0)).resetNormalizationBounds(0);
@@ -671,6 +740,40 @@ public class NSGAII_SAS extends Algorithm {
 			if(evaluations >= maxEvaluations && time == Long.MAX_VALUE) {
 				time = System.currentTimeMillis();
 			}
+			
+			if(measurement >= EAConfigure.getInstance().measurement/2 && !isChange) {
+				isChange = true;
+				factory.fuzzilize(union, 0);
+				
+				((SASSolution)old_population.get(0)).resetNormalizationBounds(0);
+				((SASSolution)old_population.get(0)).resetNormalizationBounds(1);
+				/*for(int i = 0; i < union.size(); i++) {
+					((SASSolution)union.get(i)).updateNormalizationBounds(new double[] {union.get(i).getObjective(0),
+							union.get(i).getObjective(1)});
+				}*/
+				
+				for(int i = 0; i < old_population.size(); i++) {
+					problem_.evaluate(old_population.get(i));
+					//((SASSolution)old_population.get(i)).updateNormalizationBounds(new double[] {old_population.get(i).getObjective(0),
+					//		old_population.get(i).getObjective(1)});
+				}
+				
+				//twoNeighbour(old_population);
+				smallestDistance(old_population);
+				
+				//measurement += old_population.size();
+				SolutionSet ss = factory.fuzzilize(old_population);
+				population.clear();
+				for(int i = 0; i < ss.size(); i++) {
+					population.add(ss.get(i));
+				}
+				
+				
+				System.out.print("Finish changing...\n");
+			}
+			
+			
+			
 		} // while
 //		Iterator itr = population.iterator();
 //		double no = 0.0;
@@ -708,6 +811,134 @@ public class NSGAII_SAS extends Algorithm {
 		return population;
 	} // execute
 	
+	
+	private double distance(Variable[] a, Variable[] b) throws JMException{
+	        double diff_square_sum = 0.0;
+	        for (int i = 0; i < a.length; i++) {
+	            diff_square_sum += (a[i].getValue() - b[i].getValue() ) * (a[i].getValue()  - b[i].getValue() );
+	        }
+	        return Math.sqrt(diff_square_sum);
+	}
+	
+	void smallestDistance(SolutionSet union) throws JMException{
+		for(int i = 0; i < union.size(); i++) {
+			
+			if(union.get(i).getObjective(0) == Double.MAX_VALUE / 100) {
+				union.get(i).setObjective(1,Double.MAX_VALUE / 100);
+				continue;
+			}
+			
+			final Solution s = union.get(i);
+			final Variable[] baseline = s.getDecisionVariables();
+			List<Solution> list = new ArrayList<Solution>();
+			for(int j = 0; j < union.size();j++) {
+				
+				if(union.get(j).getObjective(0) == Double.MAX_VALUE / 100) {
+					continue;
+				}
+				
+				if(i != j) {
+					list.add(union.get(j));
+				}
+				
+			}
+			
+			Collections.sort(list, new Comparator<Solution>() {
+
+				@Override
+				public int compare(Solution arg0, Solution arg1) {
+					Variable[] a = arg0.getDecisionVariables();
+					Variable[] b = arg1.getDecisionVariables();
+					
+					double d1 = 0.0;
+					double d2 = 0.0;
+					try {
+						d1 = distance(baseline,a);
+						d2 = distance(baseline,b);
+					} catch (JMException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
+					/*if(d1 == 0 && d2 != 0) {
+						return 1;
+					} else if(d1 != 0 && d2 == 0) {
+						return -1;
+					} else if(d1 == 0 && d2 == 0) {
+						return 0;
+					} else*/ 
+						
+					if(d1 < d2) {
+						return -1;
+					} else if(d2 > d1) {
+						return 1;
+					} else {
+						if(Math.abs(s.getObjective(0)-arg0.getObjective(0)) > Math.abs(s.getObjective(0)-arg1.getObjective(0))) {
+							return -1;
+						} else if(Math.abs(s.getObjective(0)-arg0.getObjective(0)) < Math.abs(s.getObjective(0)-arg1.getObjective(0))) {
+							return 1;
+						}
+					}
+					return 0;
+				}
+				
+			});
+			
+			
+			
+			s.setObjective(1, list.size() == 0? Double.MAX_VALUE / 100 : list.get(0).getObjective(0));
+			//System.out.print(total / (union.size()-1) + "****\n");
+		}
+	}
+	
+	void twoNeighbour(SolutionSet union) {
+		// assume only interested in objective 0
+		// based on the average of closed objectives
+		List<Solution> list = new ArrayList<Solution>();
+		
+		for(int i = 0; i < union.size(); i++) {
+			list.add(union.get(i));
+		}
+		
+		Collections.sort(list, new Comparator<Solution>() {
+
+			@Override
+			public int compare(Solution arg0, Solution arg1) {
+				if(arg0.getObjective(0) < arg1.getObjective(0)) {
+					return -1;
+				} else if(arg0.getObjective(0) > arg1.getObjective(0)) {
+					return 1;
+				}
+				return 0;
+			}
+			
+		});
+		
+		for(int i = 0; i < list.size(); i++) {
+			
+			if(list.get(i).getObjective(0) == Double.MAX_VALUE / 100) {
+				list.get(i).setObjective(1,Double.MAX_VALUE / 100);
+				continue;
+			}
+			
+			if(i == 0) {
+				double a = list.get(list.size() - 1).getObjective(0) == Double.MAX_VALUE / 100? 0 : list.get(list.size() - 1).getObjective(0);
+				double b = list.get(i+1).getObjective(0) == Double.MAX_VALUE / 100? 0 : list.get(i+1).getObjective(0);
+				double n = a == 0 || b == 0? 1.0 : 2.0;
+				list.get(i).setObjective(1, (a + b)/n);
+			} else if(i == list.size() - 1) {
+				double a = list.get(i - 1).getObjective(0) == Double.MAX_VALUE / 100? 0 : list.get(i - 1).getObjective(0);
+				double b = list.get(0).getObjective(0) == Double.MAX_VALUE / 100? 0 : list.get(0).getObjective(0);
+				double n = a == 0 || b == 0? 1.0 : 2.0;
+				list.get(i).setObjective(1, (a + b)/n);		
+			} else {
+				double a = list.get(i - 1).getObjective(0) == Double.MAX_VALUE / 100? 0 : list.get(i - 1).getObjective(0);
+				double b = list.get(i+1).getObjective(0) == Double.MAX_VALUE / 100? 0 : list.get(i+1).getObjective(0);
+				double n = a == 0 || b == 0? 1.0 : 2.0;
+				list.get(i).setObjective(1, (a + b)/n);
+			}
+		}
+	}
 	
 	public SolutionSet doRanking(SolutionSet population){
 		Ranking ranking = new Ranking(population);

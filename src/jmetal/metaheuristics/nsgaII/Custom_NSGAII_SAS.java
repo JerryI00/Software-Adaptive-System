@@ -21,10 +21,8 @@
 
 package jmetal.metaheuristics.nsgaII;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 import org.femosaa.core.EAConfigure;
@@ -40,10 +38,10 @@ import jmetal.util.*;
 
 /**
  * 
- * @author keli, taochen
+ * @author taochen
  *
  */
-public class NSGAII_SAS extends Algorithm {
+public class Custom_NSGAII_SAS extends Algorithm {
 
 	private SASSolutionInstantiator factory = null;
 	
@@ -57,7 +55,7 @@ public class NSGAII_SAS extends Algorithm {
 	 * Constructor
 	 * @param problem Problem to solve
 	 */
-	public NSGAII_SAS(Problem problem) {
+	public Custom_NSGAII_SAS(Problem problem) {
 		super (problem) ;
 	} // NSGAII
 
@@ -66,7 +64,7 @@ public class NSGAII_SAS extends Algorithm {
   	 * Constructor
   	 * @param problem Problem to solve
   	 */
-	public NSGAII_SAS(Problem problem, SASSolutionInstantiator factory) {
+	public Custom_NSGAII_SAS(Problem problem, SASSolutionInstantiator factory) {
 		super(problem);
         this.factory = factory;
 	}
@@ -125,7 +123,7 @@ public class NSGAII_SAS extends Algorithm {
 		measurement = 0;
 
 		requiredEvaluations = 0;
-		//System.out.print("maxEvaluations " + maxEvaluations + "\n");
+
 		//Read the operators
 		mutationOperator  = operators_.get("mutation");
 		crossoverOperator = operators_.get("crossover");
@@ -135,45 +133,19 @@ public class NSGAII_SAS extends Algorithm {
 		if (seeder != null) {
 			seeder.seeding(population, factory, problem_, populationSize);
 			evaluations += populationSize;
-			if(!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
-				for (int i = 0; i < populationSize; i++) {
-					Solution s = population.get(i);
-					if(s.getObjective(0) == Double.MAX_VALUE || s.getObjective(0) == Double.MAX_VALUE/100) {
-						
-					} else {
-						measurement += factory.record(s);
-					}
-				}
-				
-				
-			} else {
-				measurement += factory.record(population);
-			}
-			
+			measurement += factory.record(population);
 		} else {
-			// Create the initial solutionSet
+			// Create the initial solutionSet			
 			for (int i = 0; i < populationSize; i++) {
 				newSolution = factory.getSolution(problem_);
 				problem_.evaluate(newSolution);
 				problem_.evaluateConstraints(newSolution);
 				evaluations++;
-				if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
-
-					if (newSolution.getObjective(0) == Double.MAX_VALUE
-							|| newSolution.getObjective(0) == Double.MAX_VALUE / 100) {
-
-					} else {
-						measurement += factory.record(newSolution);
-					}
-
-				} else {
-					measurement += factory.record(newSolution);
-				}
-
+				measurement += factory.record(newSolution);
 				population.add(newSolution);
-			} // for
+			} //for 
 		}
-
+		
 		if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
 			Iterator itr = population.iterator();
 			while(itr.hasNext()) {
@@ -188,28 +160,9 @@ public class NSGAII_SAS extends Algorithm {
 			population = factory.fuzzilize(population);
 		}
 		
-		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 || SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {			
+		if (SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0) {			
 			org.femosaa.util.Logger.logSolutionSetWithGeneration(population,
 					"InitialSolutionSet.rtf", 0);
-		}
-		
-		if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
-			if(SASAlgorithmAdaptor.isFuzzy) {
-				org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithMeasurement.rtf", 
-						measurement );
-			} else {
-				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithMeasurement.rtf", 
-						measurement );
-			}
-			
-		}
-		
-		if (SASAlgorithmAdaptor.logMeasurementOfFuzzyObjectiveValue) {
-			if(SASAlgorithmAdaptor.isFuzzy) {
-				org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithFuzzyMeasurement.rtf", 
-						measurement );
-			}
-			
 		}
 
 		if(vandInvCoEvolver != null) {
@@ -228,7 +181,7 @@ public class NSGAII_SAS extends Algorithm {
 		
 		// Generations 
 		while (evaluations < maxEvaluations || (evaluations >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time )) {
-			//System.out.print("no" + evaluations + "***eval\n");
+			System.out.print("no" + evaluations + "***eval\n");
 			
 			if(EAConfigure.getInstance().measurement == measurement) {
 				break;
@@ -302,35 +255,13 @@ public class NSGAII_SAS extends Algorithm {
 					//long test_time = System.currentTimeMillis();
 					problem_.evaluate(offSpring[0]);
 					problem_.evaluateConstraints(offSpring[0]);
-					if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
-
-						if (offSpring[0].getObjective(0) == Double.MAX_VALUE
-								|| offSpring[0].getObjective(0) == Double.MAX_VALUE / 100) {
-
-						} else {
-							measurement += factory.record(offSpring[0]);
-						}
-
-					} else {
-						measurement += factory.record(offSpring[0]);
-					}
+					measurement += factory.record(offSpring[0]);
 					if(EAConfigure.getInstance().measurement == measurement) {
 						break;
 					}
 					problem_.evaluate(offSpring[1]);
 					problem_.evaluateConstraints(offSpring[1]);
-					if (!SASAlgorithmAdaptor.isInvalidSolutionConsumeMeasurement) {
-
-						if (offSpring[1].getObjective(0) == Double.MAX_VALUE
-								|| offSpring[1].getObjective(0) == Double.MAX_VALUE / 100) {
-
-						} else {
-							measurement += factory.record(offSpring[1]);
-						}
-
-					} else {
-						measurement += factory.record(offSpring[1]);
-					}
+					measurement += factory.record(offSpring[1]);
 					if(EAConfigure.getInstance().measurement == measurement) {
 						break;
 					}
@@ -366,77 +297,16 @@ public class NSGAII_SAS extends Algorithm {
 			} // for
 			
 			SolutionSet old_union = null;
-			
-			if (SASAlgorithmAdaptor.isToFilterRedundantSolution) {
-
-				int target = 0;
-				Set<String> record = new HashSet<String>();
-				List<Solution> removed = new ArrayList<Solution>();
-				if (SASAlgorithmAdaptor.isFuzzy) {
-					old_population = filter(old_population, record, removed, target);
-				} else {
-					population = filter(population, record, removed,  target);
-				}
-				
-				offspringPopulation = filter(offspringPopulation, record, removed,  target);
-				
-				int size = 0;
-				if (SASAlgorithmAdaptor.isFuzzy) {
-					size = old_population.size();
-				} else {
-					size = population.size();
-				}
-				
-				if (SASAlgorithmAdaptor.isFuzzy) {
-					printSolutions(old_population);
-				} else {
-					printSolutions(population);
-				}
-				printSolutions(offspringPopulation);
-			
-				
-				size = size + offspringPopulation.size();
-				
-				System.out.print("Unique: " + size + "\n");
-				
-				if (size < populationSize) {
-					int l = populationSize - size;
-					for (int i = 0; i < l; i++) {
-						offspringPopulation.add(removed.get(i));
-					}
-				} else {
-					
-				}
-											
-			}
-			
-		
-			
 			// Create the solutionSet union of solutionSet and offSpring			
 			if(SASAlgorithmAdaptor.isFuzzy) {			
 				union = ((SolutionSet) old_population).union(offspringPopulation);
 				old_union = union;
-				if(SASAlgorithmAdaptor.isBoundNormalizationForTarget) {
-					((SASSolution)old_population.get(0)).resetNormalizationBounds(0);
-					((SASSolution)old_population.get(0)).resetNormalizationBounds(1);
-					/*for(int i = 0; i < union.size(); i++) {
-						((SASSolution)union.get(i)).updateNormalizationBounds(new double[] {union.get(i).getObjective(0),
-								union.get(i).getObjective(1)});
-					}*/
-					
-					for(int i = 0; i < old_population.size(); i++) {
-						((SASSolution)old_population.get(i)).updateNormalizationBounds(new double[] {old_population.get(i).getObjective(0),
-								old_population.get(i).getObjective(1)});
-					}
-				}
-				union = factory.fuzzilize(union);//((double) measurement - 1) / (EAConfigure.getInstance().measurement - 1)
+				union = factory.fuzzilize(union);
 			} else {
 				union = ((SolutionSet) population).union(offspringPopulation);
 			}
 			// Create the solutionSet union of solutionSet and offSpring
 			//union = ((SolutionSet) population).union(offspringPopulation);
-			
-	       
 			
 			if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValueTwoPop) {
 				if(SASAlgorithmAdaptor.isFuzzy) {
@@ -447,7 +317,6 @@ public class NSGAII_SAS extends Algorithm {
 							measurement );
 				}
 			}
-			
 			
 			boolean isLog = false;
 			
@@ -552,15 +421,6 @@ public class NSGAII_SAS extends Algorithm {
 			}
 		
 			
-			/*if(SASAlgorithmAdaptor.isFuzzy) {
-				for (int i = 0; i < population.size(); i++) {
-					System.out.print("***\n");
-					System.out.print("fuzzy value = " + population.get(i).getObjective(0) + ":" + population.get(i).getObjective(1) + "\n");
-					System.out.print("orignal value = " + factory.defuzzilize(population.get(i), old_union).getObjective(0) + ":" + factory.defuzzilize(population.get(i), old_union).getObjective(1) + "\n");
-					System.out.print("***\n");
-				}
-			}*/
-			
 			if(SASAlgorithmAdaptor.logGenerationOfObjectiveValue > 0 && evaluations%SASAlgorithmAdaptor.logGenerationOfObjectiveValue == 0) {
 				if(SASAlgorithmAdaptor.isFuzzy) {
 					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithGen.rtf", 
@@ -577,50 +437,11 @@ public class NSGAII_SAS extends Algorithm {
 			if (SASAlgorithmAdaptor.logMeasurementOfObjectiveValue) {
 				if(SASAlgorithmAdaptor.isFuzzy) {
 					org.femosaa.util.Logger.logSolutionSetWithGeneration(old_population, "SolutionSetWithMeasurement.rtf", 
-							measurement );					
+							measurement );
 				} else {
 					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithMeasurement.rtf", 
 							measurement );
 				}
-				
-			}
-			
-			if (SASAlgorithmAdaptor.logMeasurementOfFuzzyObjectiveValue) {
-				if(SASAlgorithmAdaptor.isFuzzy) {
-					org.femosaa.util.Logger.logSolutionSetWithGeneration(population, "SolutionSetWithFuzzyMeasurement.rtf", 
-							measurement );
-				}
-				
-			}
-			
-			if(SASAlgorithmAdaptor.logMeasurementOfRemovedObjectiveValue) {
-				SolutionSet set = new SolutionSet();
-				for (int k = 0; k < union.size(); k++) {
-					
-					boolean removed = true;
-					for (int i = 0; i < population.size(); i++) {
-						if (union.get(k) == population. get(i)) {
-							removed = false;
-							break;
-						}
-					}
-					
-					if(removed) {
-						set.add(union.get(k));
-					}
-					
-				}
-				
-				org.femosaa.util.Logger.logSolutionSetWithGeneration(set, "SolutionSetWithFuzzyMeasurementForRemoved.rtf", 
-						measurement );					
-		
-				SolutionSet o_set = new SolutionSet();
-				for (int k = 0; k < set.size(); k++) {
-					o_set.add(factory.defuzzilize(set.get(k), old_union));
-				}
-				
-				org.femosaa.util.Logger.logSolutionSetWithGeneration(o_set, "SolutionSetWithMeasurementForRemoved.rtf", 
-						measurement );
 				
 			}
 			
@@ -712,76 +533,6 @@ public class NSGAII_SAS extends Algorithm {
 	public SolutionSet doRanking(SolutionSet population){
 		Ranking ranking = new Ranking(population);
 		return ranking.getSubfront(0);
-	}
-	
-	private void printSolutions(SolutionSet pop) throws JMException {
-		System.out.print("-----------------\n");
-		for (int i = 0; i < pop.size(); i++) {
-			
-		   
-			String v = "";
-			for (int j = 0; j < pop.get(i).getDecisionVariables().length; j++) {
-				v += pop.get(i).getDecisionVariables()[j].getValue()+",";
-			}
-			
-			v += "=" + pop.get(i).getObjective(0) + ":" + pop.get(i).getObjective(1);
-			
-			System.out.print(v + "\n");
-			
-		}
-		System.out.print("-----------------\n");
-	}
-	
-	private SolutionSet filter(SolutionSet pop, Set<String> record, List<Solution> removed, int target) throws JMException {
-		SolutionSet newSet = new SolutionSet();
-		
-		
-		List<Integer> index = new ArrayList<Integer>();
-		
-		
-		for (int i = 0; i < pop.size(); i++) {
-			
-			String v = "";
-			for (int j = 0; j < pop.get(i).getDecisionVariables().length; j++) {
-				v += pop.get(i).getDecisionVariables()[j].getValue()+",";
-			}
-			
-			if(record.contains(v)) {
-				index.add(i);
-				
-				for (int k = 0; k < removed.size(); k++) {
-					if (pop.get(i).getObjective(target) < removed.get(k).getObjective(target)) {
-						removed.add(k, pop.get(i));
-						break;
-					}
-				}
-				
-			} else {
-				record.add(v);
-			}
-			
-		}
-		
-		
-		
-		for (int i = 0; i < pop.size(); i++) {
-			
-
-			boolean include = true;
-			for (int term : index) {
-				if(i == term) {
-					include = false;
-					break;
-				}
-						
-			}
-			
-			if(include) {
-				newSet.add(pop.get(i));
-			}
-		}
-		
-		return newSet;
 	}
 	
 	/**

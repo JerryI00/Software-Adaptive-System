@@ -35,6 +35,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.*;
 
+import org.femosaa.core.EAConfigure;
 import org.femosaa.core.SAS;
 import org.femosaa.core.SASAlgorithmAdaptor;
 import org.femosaa.core.SASSolution;
@@ -120,6 +121,7 @@ public class MOEAD_STM_SAS extends Algorithm {
 		
 		int type;
 		int maxEvaluations;
+		int measurement = 0;
 		
 		// knee point which might be used as the output
 		Solution kneeIndividual = factory.getSolution(problem_);
@@ -158,7 +160,7 @@ public class MOEAD_STM_SAS extends Algorithm {
 		initNeighborhood();
 
 		// STEP 1.2. initialize population
-		initPopulation();
+		measurement += initPopulation();
 		if(vandInvCoEvolver != null) {
 			for (int i = 0; i < populationSize_; i++) {
 				Solution newSolution = factory.getSolution(problem_);
@@ -179,6 +181,12 @@ public class MOEAD_STM_SAS extends Algorithm {
 		// STEP 1.3. initialize the ideal and nadir points
 		initIdealPoint();
 		initNadirPoint();
+		
+		SolutionSet old_population = new SolutionSet(populationSize_);
+		if(SASAlgorithmAdaptor.isFuzzy) {
+			old_population = population_;
+			population_ = factory.fuzzilize(population_);
+		}
 
 		//long time = System.currentTimeMillis();
 		long time = Long.MAX_VALUE;
@@ -241,7 +249,15 @@ public class MOEAD_STM_SAS extends Algorithm {
 				mutation_.execute(children[1]);
 				// evaluation
 				problem_.evaluate(children[0]);
+				measurement += factory.record(children[0]);
+				if(EAConfigure.getInstance().measurement == measurement) {
+					break;
+				}
 				problem_.evaluate(children[1]);
+				measurement += factory.record(children[1]);
+				if(EAConfigure.getInstance().measurement == measurement) {
+					break;
+				}
 				
 
 				// STEP 2.3. update the ideal and nadir points
@@ -272,8 +288,33 @@ public class MOEAD_STM_SAS extends Algorithm {
 				
 			} // for
 			
-			// Combine the parent and the current offspring populations
-			union_ = ((SolutionSet) population_).union(currentOffspring_);
+			SolutionSet old_union = null;
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				
+				union_ = ((SolutionSet) old_population).union(currentOffspring_);
+				old_union = union_;
+				if(SASAlgorithmAdaptor.isBoundNormalizationForTarget) {
+					((SASSolution)old_population.get(0)).resetNormalizationBounds(0);
+					((SASSolution)old_population.get(0)).resetNormalizationBounds(1);
+					/*for(int i = 0; i < union.size(); i++) {
+						((SASSolution)union.get(i)).updateNormalizationBounds(new double[] {union.get(i).getObjective(0),
+								union.get(i).getObjective(1)});
+					}*/
+					
+					for(int i = 0; i < old_population.size(); i++) {
+						((SASSolution)old_population.get(i)).updateNormalizationBounds(new double[] {old_population.get(i).getObjective(0),
+								old_population.get(i).getObjective(1)});
+					}
+				}
+				union_ = factory.fuzzilize(union_);
+				old_population.clear();
+				
+			} else {
+				// Combine the parent and the current offspring populations
+				union_ = ((SolutionSet) population_).union(currentOffspring_);
+			}
+			
+		
 
 			// selection process
 			selection();
@@ -283,6 +324,19 @@ public class MOEAD_STM_SAS extends Algorithm {
 			if (iteration % 30 == 0) {
 				comp_utility();
 			}
+			
+			
+			if(SASAlgorithmAdaptor.isFuzzy) {
+				for (int i = 0; i < population_.size(); i++) {
+					/*System.out.print("***\n");
+					System.out.print("fuzzy value = " + population_.get(i).getObjective(0) + ":" + population_.get(i).getObjective(1) + "\n");
+					System.out.print("orignal value = " + factory.defuzzilize(population_.get(i), old_union).getObjective(0) + ":" + factory.defuzzilize(population_.get(i), old_union).getObjective(1) + "\n");
+					System.out.print("***\n");*/
+					old_population.add(factory.defuzzilize(population_.get(i), old_union));
+				}
+			}
+			
+			
 			
 			if(vandInvCoEvolver != null) {
 				vandInvCoEvolver.doEnvironmentalSelection(population_);
@@ -300,6 +354,10 @@ public class MOEAD_STM_SAS extends Algorithm {
 				time = System.currentTimeMillis();
 			}
 			
+			if(EAConfigure.getInstance().measurement == measurement) {
+				break;
+			}
+			
 		} while (evaluations_ <= maxEvaluations  
 				|| (evaluations_ >= maxEvaluations && (System.currentTimeMillis() - time) < SASAlgorithmAdaptor.seed_time ));
 		//while  ((evaluations_ <= maxEvaluations && (System.currentTimeMillis() - time) < SAS.TIME_THRESHOLD)
@@ -313,6 +371,11 @@ public class MOEAD_STM_SAS extends Algorithm {
 //			population_.clear();
 //			population_.add(kneeIndividual);
 //		}
+		
+		if(SASAlgorithmAdaptor.isFuzzy) {
+			population_ = old_population;
+			org.femosaa.util.Logger.logFinalEvaluation("FinalEvaluationCount.rtf", evaluations_);
+		}
 		
 		return population_;
 
@@ -663,7 +726,7 @@ public class MOEAD_STM_SAS extends Algorithm {
    * @throws JMException
    * @throws ClassNotFoundException
    */
-  public void initPopulation() throws JMException, ClassNotFoundException {
+  public int initPopulation() throws JMException, ClassNotFoundException {
 	  if (seeder != null) {
 			seeder.seeding(population_, factory, problem_, populationSize_);
 			evaluations_ += populationSize_;
@@ -673,7 +736,9 @@ public class MOEAD_STM_SAS extends Algorithm {
 				  savedValues_[i] = factory.getSolution((Solution)itr.next());
 				  i++;
 			}
+			return factory.record(population_);
 		} else {
+			int count = 0;
 			 for (int i = 0; i < populationSize_; i++) {
 			      Solution newSolution = factory.getSolution(problem_);
 
@@ -681,7 +746,9 @@ public class MOEAD_STM_SAS extends Algorithm {
 			      evaluations_++;
 			      population_.add(newSolution) ;
 			      savedValues_[i] = factory.getSolution(newSolution);
+			      count += factory.record(newSolution);
 			  }
+			 return count;
 		}
 	 
 		

@@ -35,7 +35,8 @@ public class FixedSeeder extends Seeder{
 			SASSolutionInstantiator factory, Problem problem_,
 			int populationSize) throws JMException {
 		Solution newSolution;
-		int l = populationSize < 20? 1 : populationSize/20;//20 is for s-vs-m; 1 is used for req-vs-mo
+		//int l = populationSize < 20? 1 : populationSize/20;//20 is for s-vs-m; 1 is used for req-vs-mo
+		int l = seeds.size();
 		for (int i = 0; i < l; i++) {
 			newSolution = factory.getSolution(problem_);
 			String[] d = seeds.get(i).split(":");

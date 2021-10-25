@@ -180,6 +180,12 @@ public class DummySASSolution extends SASSolution{
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void resetNormalizationBounds(int i) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 
 }

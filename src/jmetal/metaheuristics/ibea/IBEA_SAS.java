@@ -400,6 +400,33 @@ public class IBEA_SAS extends Algorithm {
 			if(SASAlgorithmAdaptor.isFuzzy) {			
 				union = ((SolutionSet) solutionSet).union(old_population);
 				old_union = union;
+				if(SASAlgorithmAdaptor.isBoundNormalizationForTarget) {
+					
+					boolean filled = false;
+					if(old_population.size() == 0) {
+						for(int i = 0; i < solutionSet.size(); i++) {
+							old_population.add(solutionSet.get(i));
+						}
+						filled= true;
+					}
+					
+					((SASSolution)old_population.get(0)).resetNormalizationBounds(0);
+					((SASSolution)old_population.get(0)).resetNormalizationBounds(1);
+					/*for(int i = 0; i < union.size(); i++) {
+						((SASSolution)union.get(i)).updateNormalizationBounds(new double[] {union.get(i).getObjective(0),
+								union.get(i).getObjective(1)});
+					}*/
+					
+					for(int i = 0; i < old_population.size(); i++) {
+						((SASSolution)old_population.get(i)).updateNormalizationBounds(new double[] {old_population.get(i).getObjective(0),
+								old_population.get(i).getObjective(1)});
+					}
+					
+					if(filled) {
+						old_population.clear();
+					}
+					
+				}
 				union = factory.fuzzilize(union);
 			} else {
 				union = ((SolutionSet) solutionSet).union(archive);
@@ -415,6 +442,10 @@ public class IBEA_SAS extends Algorithm {
 			
 			if(SASAlgorithmAdaptor.isFuzzy) {
 				for (int i = 0; i < archive.size(); i++) {
+					/*System.out.print("***\n");
+					System.out.print("fuzzy value = " + archive.get(i).getObjective(0) + ":" + archive.get(i).getObjective(1) + "\n");
+					System.out.print("orignal value = " + factory.defuzzilize(archive.get(i), old_union).getObjective(0) + ":" + factory.defuzzilize(archive.get(i), old_union).getObjective(1) + "\n");
+					System.out.print("***\n");*/
 					old_population.add(factory.defuzzilize(archive.get(i), old_union));
 				}				
 			}
