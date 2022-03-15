@@ -51,6 +51,9 @@ public class BinaryTournament2 extends Selection {
    *  index_ stores the actual index for selection
    */
   private int index_ = 0;
+  
+  
+  private int pop = 0;
     
   /**
    * Constructor
@@ -71,6 +74,13 @@ public class BinaryTournament2 extends Selection {
   public Object execute(Object object)    
   {
     SolutionSet population = (SolutionSet)object;
+    
+    if(pop != population.size()) {
+    	index_ = 0;
+    }
+    
+    pop = population.size();
+    
     if (index_ == 0) //Create the permutation
     {
       a_= (new jmetal.util.PermutationUtility()).intPermutation(population.size());
@@ -79,7 +89,12 @@ public class BinaryTournament2 extends Selection {
         
     Solution solution1,solution2;
     solution1 = population.get(a_[index_]);
-    solution2 = population.get(a_[index_+1]);
+    if(index_+1 >= a_.length) {
+    	solution2 = population.get(a_[0]);
+    } else {
+        solution2 = population.get(a_[index_+1]);
+    }
+  
         
     index_ = (index_ + 2) % population.size();
         

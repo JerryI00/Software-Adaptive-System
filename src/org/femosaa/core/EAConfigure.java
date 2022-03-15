@@ -14,7 +14,7 @@ public class EAConfigure {
 	public double crossover_rate;
 	public double mutation_rate;
 	
-	public int measurement = 150;//1000; //-
+	public int measurement = 400;//50;//400;//1000; //-
 	
 	
 	public EAConfigure(int pop_size, int generation, double crossover_rate,
@@ -48,7 +48,8 @@ public class EAConfigure {
 	}
 	
 	public void setupFLASHConfiguration(){
-		con = new EAConfigure(20, 500*10, 0.9,  0.1);
+		con = new EAConfigure(10/*4,10*/, 500*10, 0.9,  0.1);
+		//con = new EAConfigure(10/*4,10*/, 100, 0.9,  0.1);// for wodup
 		//con = new EAConfigure(30, 20, 0.9,  0.1);
 	}
 	

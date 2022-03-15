@@ -48,7 +48,11 @@ public abstract class SASAlgorithmAdaptor {
 	public static boolean logPreivousAndCurrentPopToBest = false;
 	public static boolean isBoundNormalizationForTarget = true;
 	
-	public static boolean isToFilterRedundantSolution = false; // in terms of configuration
+	public static boolean isAdaptiveWeightinMMO = true;
+	
+	
+	public static boolean isToFilterRedundantSolution = true; // in terms of configuration
+	public static boolean isToFilterRedundantSolutionMating = false; 
 	
 	public static boolean isInvalidSolutionConsumeMeasurement = true; // true by default
 	
