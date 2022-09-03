@@ -534,7 +534,7 @@ public class NSGAII_SAS extends Algorithm {
 						same_optimum_count = 0;
 					}
 
-					if (MMOWeightAdaptor.isAdapt(same_optimum_count, measurement, EAConfigure.getInstance().measurement)) {
+					if (SASAlgorithmAdaptor.isAdaptConstantly || MMOWeightAdaptor.isAdapt(same_optimum_count, measurement, EAConfigure.getInstance().measurement)) {
 					//if(1==1) {
 					
 					    System.out.print("trigger weight change...\n");
@@ -546,14 +546,14 @@ public class NSGAII_SAS extends Algorithm {
 
 					}
 					
-					weight_str += "("+measurement + ","+mmo_weight+")\n";
-					proportion_str += "("+measurement + ","+MMOWeightAdaptor.testProportion(factory, union, mmo_weight)+")\n";
+					//weight_str += "("+measurement + ","+mmo_weight+")\n";
+					//proportion_str += "("+measurement + ","+MMOWeightAdaptor.testProportion(factory, union, mmo_weight)+")\n";
 					
 					//mmo_weight = 1.0;
 					union = factory.fuzzilize(union, mmo_weight);
 				} else {
-					weight_str += "("+measurement + ","+mmo_weight+")\n";
-					proportion_str += "("+measurement + ","+MMOWeightAdaptor.testProportion(factory, union, mmo_weight)+")\n";
+					//weight_str += "("+measurement + ","+mmo_weight+")\n";
+					//proportion_str += "("+measurement + ","+MMOWeightAdaptor.testProportion(factory, union, mmo_weight)+")\n";
 					
 					union = factory.fuzzilize(union);//((double) measurement - 1) / (EAConfigure.getInstance().measurement - 1)
 				}
@@ -699,10 +699,11 @@ public class NSGAII_SAS extends Algorithm {
 						for (int j = 0; j < front_set.get(k).getDecisionVariables().length; j++) {
 							v += front_set.get(k).getDecisionVariables()[j].getValue()+",";
 						}
-						if(record.contains(v)) {
+						if(record.contains(v) && i != ranking.getNumberOfSubfronts() - 1) {
 							pre.add(front_set.get(k));
 						} else {
 							sets[i].add(front_set.get(k));
+							record.add(v);
 						}
 					}
 					
@@ -711,7 +712,16 @@ public class NSGAII_SAS extends Algorithm {
 				
 				front = sets[index];
 				
+			
+				
 				while ((remain > 0) && (remain >= front.size())) {
+					/*for (int k = 0; k < front.size(); k++) {
+						String v = "";
+						for (int j = 0; j < front.get(k).getDecisionVariables().length; j++) {
+							v += front.get(k).getDecisionVariables()[j].getValue()+",";
+						}
+						System.out.print("all: " + sets.length + ", current: "+index + " = " + v + "\n");
+					}*/
 					//Assign crowding distance to individuals
 					distance.crowdingDistanceAssignment(front, problem_.getNumberOfObjectives());
 					//Add the individuals of this front
@@ -742,7 +752,14 @@ public class NSGAII_SAS extends Algorithm {
 				} // while
 				
 				// Remain is less than front(index).size, insert only the best one
-				if (remain > 0) {  // front contains individuals to insert                        
+				if (remain > 0) {  // front contains individuals to insert 
+					/*for (int k = 0; k < front.size(); k++) {
+					String v = "";
+					for (int j = 0; j < front.get(k).getDecisionVariables().length; j++) {
+						v += front.get(k).getDecisionVariables()[j].getValue()+",";
+					}
+					System.out.print("all: " + sets.length + ", current: "+index + " = " + v + "\n");
+				    }*/
 					distance.crowdingDistanceAssignment(front, problem_.getNumberOfObjectives());
 					front.sort(new CrowdingComparator());
 					for (int k = 0; k < remain; k++) {
@@ -1124,8 +1141,8 @@ public class NSGAII_SAS extends Algorithm {
 		System.out.print("-------final evalution: " + evaluations + "-------\n");
 		
 		
-		System.out.print(weight_str + "\n\n\n");
-		System.out.print(proportion_str + "\n\n\n");
+		//System.out.print(weight_str + "\n\n\n");
+		//System.out.print(proportion_str + "\n\n\n");
 		
 		// Return the first non-dominated front
 //		Ranking ranking = new Ranking(population);
@@ -1667,7 +1684,7 @@ public class NSGAII_SAS extends Algorithm {
 				int nondomainted_count = ranking.getSubfront(0).size();
 				int nondominated_threshold = (int) Math.round(population_size * proportion);
 				
-				System.out.print(newSet.size() +" nondomainted_count: " + nondomainted_count  + ", threshold: " + nondominated_threshold +  " = " + w +"\n");
+				//System.out.print(newSet.size() +" nondomainted_count: " + nondomainted_count  + ", threshold: " + nondominated_threshold +  " = " + w +"\n");
 				//if(w % 0.1 == 0)
 				//double t = nondomainted_count;
 				//double s = nondomainted_count / 20.0;

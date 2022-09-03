@@ -50,6 +50,7 @@ public abstract class SASAlgorithmAdaptor {
 	
 	public static boolean isAdaptiveWeightinMMO = true;
 	
+	public static boolean isAdaptConstantly = false;
 	
 	public static boolean isToFilterRedundantSolution = true; // in terms of configuration
 	public static boolean isToFilterRedundantSolutionMating = false; 
