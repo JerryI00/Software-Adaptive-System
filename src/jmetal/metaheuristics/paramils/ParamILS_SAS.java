@@ -230,6 +230,11 @@ public class ParamILS_SAS extends Algorithm {
 			
 			}
 			
+			if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+				full_set.add(convertFullInfo(s));
+				
+			}
+			
 			updateReference(s);
 			updateNadirPoint(s);
 
@@ -244,6 +249,7 @@ public class ParamILS_SAS extends Algorithm {
 				population.clear();
 				population.add(s);
 			}
+		
 			 
 		 }
 		// Generations
@@ -300,6 +306,13 @@ public class ParamILS_SAS extends Algorithm {
 				
 				}
 				
+
+				if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+					full_set.add(convertFullInfo(s));
+					
+				}
+				
+				
 				updateReference(s);
 				updateNadirPoint(s);
 
@@ -347,7 +360,7 @@ public class ParamILS_SAS extends Algorithm {
 				break;
 			}
 			
-			
+			System.out.print("consumed budget " + measurement + "\n");
 
 		} // while
 		
@@ -435,6 +448,12 @@ public class ParamILS_SAS extends Algorithm {
 						fitnessAssignment(nextSolution);
 						
 						set.add(nextSolution);
+						
+						
+						if(SASAlgorithmAdaptor.isLogSolutionsInFull) {
+							full_set.add(convertFullInfo(nextSolution));
+							
+						}
 						
 						measurement = measurement + factory.record(nextSolution);
 						

@@ -52,8 +52,11 @@ public abstract class SASAlgorithmAdaptor {
 	
 	public static boolean isAdaptConstantly = false;
 	
+	public static boolean isToFilterRedundantSolutionWithRetention = true; // in terms of configuration, this has higher priority than isToFilterRedundantSolution, 
+	//i.e., when both are enable, this one will be executed; also, if this one is enable, then isToFilterRedundantSolution will have to be enable to ensure the proportion is reflected correctly.
 	public static boolean isToFilterRedundantSolution = true; // in terms of configuration
 	public static boolean isToFilterRedundantSolutionMating = false; 
+	//public static boolean isToFilterRedundantSolution = true; // in terms of configuration
 	
 	public static boolean isInvalidSolutionConsumeMeasurement = true; // true by default
 	

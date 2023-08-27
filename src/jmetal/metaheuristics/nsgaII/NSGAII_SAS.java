@@ -671,7 +671,7 @@ public class NSGAII_SAS extends Algorithm {
 			
 
 		// for remove redundant ***********
-			if(SASAlgorithmAdaptor.isToFilterRedundantSolution) {
+			if(SASAlgorithmAdaptor.isToFilterRedundantSolutionWithRetention) {
 				
 				Set<String> record = new HashSet<String>();
 				SolutionSet[] sets = new SolutionSet[ranking.getNumberOfSubfronts()];
@@ -922,8 +922,154 @@ public class NSGAII_SAS extends Algorithm {
 						remain = 0;
 					} // if 
 				}*/
+			
+			// No partial duplicate retention
+			} else if (SASAlgorithmAdaptor.isToFilterRedundantSolution) {
+				
+				Set<String> record = new HashSet<String>();
+				SolutionSet[] sets = new SolutionSet[ranking.getNumberOfSubfronts()];
+				SolutionSet duplicate = new SolutionSet();
+			
+				
+				for (int i = 0; i < ranking.getNumberOfSubfronts(); i++) {
+					record.clear();
+					
+					sets[i] = new SolutionSet();
+					SolutionSet front_set = new SolutionSet();
+					
+					for (int j = 0; j < ranking.getSubfront(i).size(); j++) {
+						front_set.add(ranking.getSubfront(i).get(j));
+					}
+					
+					
+					
+					for (int k = 0; k < front_set.size(); k++) {
+						String v = "";
+						for (int j = 0; j < front_set.get(k).getDecisionVariables().length; j++) {
+							v += front_set.get(k).getDecisionVariables()[j].getValue()+",";
+						}
+						if(record.contains(v)) {
+							duplicate.add(front_set.get(k));
+						} else {
+							sets[i].add(front_set.get(k));
+							record.add(v);
+						}
+					}
+					
+					
+				}
+				
+				front = sets[index];
 				
 				
+				while ((remain > 0) && (remain >= front.size())) {
+					//Assign crowding distance to individuals
+					distance.crowdingDistanceAssignment(front, problem_.getNumberOfObjectives());
+					//Add the individuals of this front
+					for (int k = 0; k < front.size(); k++) {
+						population.add(front.get(k));
+						if(SASAlgorithmAdaptor.isFuzzy) {
+							old_population.add(factory.defuzzilize(front.get(k), old_union));
+							if (SASAlgorithmAdaptor.logPreivousAndCurrentPopToBest) {
+								((SASSolution)front.get(k)).index = old_population.size()-1;
+							}
+						}
+					} // for
+
+					//Decrement remain
+					remain = remain - front.size();
+
+					//Obtain the next front
+					index++;
+					// for remove redundant ***********
+					/*if(index >= ranking.getNumberOfSubfronts()) {
+						break;
+					}*/
+					// for remove redundant ***********
+					if (remain > 0) {
+						// If we remove all duplicates, it is possible that the remaning is not enough to fill the population.
+						// In that case, we do the nondomainted sorting only on the previosuly filtered duplicates.
+						if(index >= ranking.getNumberOfSubfronts()) {
+							int sub_index = 0;
+							Ranking subRank = new Ranking(duplicate);
+							duplicate = subRank.getSubfront(sub_index);
+							
+							while ((remain > 0) && (remain >= duplicate.size())) {
+								//Assign crowding distance to individuals
+								distance.crowdingDistanceAssignment(duplicate, problem_.getNumberOfObjectives());
+								//Add the individuals of this front
+								for (int k = 0; k < duplicate.size(); k++) {
+									population.add(duplicate.get(k));
+									if(SASAlgorithmAdaptor.isFuzzy) {
+										old_population.add(factory.defuzzilize(duplicate.get(k), old_union));
+										if (SASAlgorithmAdaptor.logPreivousAndCurrentPopToBest) {
+											((SASSolution)duplicate.get(k)).index = old_population.size()-1;
+										}
+									}
+								} // for
+
+								//Decrement remain
+								remain = remain - duplicate.size();
+
+								//Obtain the next front
+								sub_index++;
+								// for remove redundant ***********
+								/*if(index >= ranking.getNumberOfSubfronts()) {
+									break;
+								}*/
+								// for remove redundant ***********
+								if (remain > 0) {
+									duplicate = subRank.getSubfront(sub_index);
+									
+								} // if  
+								
+								
+							} // while
+							
+							// Remain is less than front(index).size, insert only the best one
+							if (remain > 0) {  // front contains individuals to insert                        
+								distance.crowdingDistanceAssignment(duplicate, problem_.getNumberOfObjectives());
+								duplicate.sort(new CrowdingComparator());
+								for (int k = 0; k < remain; k++) {
+									population.add(duplicate.get(k));
+									if(SASAlgorithmAdaptor.isFuzzy) {
+										old_population.add(factory.defuzzilize(duplicate.get(k), old_union));
+										if (SASAlgorithmAdaptor.logPreivousAndCurrentPopToBest) {
+											((SASSolution)duplicate.get(k)).index = old_population.size()-1;
+										}
+									}
+								} // for
+
+								remain = 0;
+							} // if 
+							
+							
+						} else {
+							   front = ranking.getSubfront(index);
+						}
+					  
+						
+					} // if  
+					
+					
+				} // while
+				
+				// Remain is less than front(index).size, insert only the best one
+				if (remain > 0) {  // front contains individuals to insert                        
+					distance.crowdingDistanceAssignment(front, problem_.getNumberOfObjectives());
+					front.sort(new CrowdingComparator());
+					for (int k = 0; k < remain; k++) {
+						population.add(front.get(k));
+						if(SASAlgorithmAdaptor.isFuzzy) {
+							old_population.add(factory.defuzzilize(front.get(k), old_union));
+							if (SASAlgorithmAdaptor.logPreivousAndCurrentPopToBest) {
+								((SASSolution)front.get(k)).index = old_population.size()-1;
+							}
+						}
+					} // for
+
+					remain = 0;
+				} // if 
 			} else {
 				
 
